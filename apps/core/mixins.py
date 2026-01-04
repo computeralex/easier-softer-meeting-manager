@@ -52,3 +52,15 @@ class ServicePositionRequiredMixin(PositionRequiredMixin):
             return True
         # Any authenticated user with at least one position can access
         return self.request.user.is_service_position_holder
+
+
+class SuperuserRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Mixin that requires superuser/admin access."""
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def handle_no_permission(self):
+        if self.request.user.is_authenticated:
+            raise PermissionDenied("Administrator access required.")
+        return super().handle_no_permission()

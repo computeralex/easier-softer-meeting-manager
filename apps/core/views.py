@@ -20,7 +20,7 @@ from django.urls import reverse_lazy, reverse
 from django.views import View
 from django.views.generic import TemplateView, FormView, ListView, CreateView, UpdateView, DeleteView, RedirectView
 
-from .mixins import ServicePositionRequiredMixin
+from .mixins import ServicePositionRequiredMixin, SuperuserRequiredMixin
 from .models import MeetingConfig, User, ServicePosition, PositionAssignment
 from .forms import (
     MeetingConfigForm, UserProfileForm, UserForm, UserInviteForm, PasswordChangeFormStyled,
@@ -217,8 +217,8 @@ class UtilitiesView(ServicePositionRequiredMixin, TemplateView):
         return context
 
 
-class BackupDownloadView(ServicePositionRequiredMixin, View):
-    """Download a backup file (JSON export of all data). Restricted to service positions."""
+class BackupDownloadView(SuperuserRequiredMixin, View):
+    """Download a backup file (JSON export of all data). Superuser only - contains password hashes."""
 
     def get(self, request):
         # Generate backup using dumpdata
@@ -241,23 +241,33 @@ class BackupDownloadView(ServicePositionRequiredMixin, View):
         return response
 
 
-class BackupRestoreView(ServicePositionRequiredMixin, View):
-    """Restore data from uploaded backup file. Restricted to service positions."""
+class BackupRestoreView(SuperuserRequiredMixin, View):
+    """Restore data from uploaded backup file. Superuser only."""
 
-    # Models that cannot be restored via backup (security-sensitive)
+    # Models that are NEVER restored (security + local settings)
     BLOCKED_MODELS = {
-        'core.user',
-        'core.serviceposition',
-        'core.positionassignment',
-        'auth.user',
-        'auth.group',
-        'auth.permission',
-        'admin.logentry',
-        'sessions.session',
-        'axes.accessattempt',
-        'axes.accesslog',
-        'axes.accessfailurelog',
+        'core.user',            # NEVER restore users - prevents lockout/privilege escalation
+        'core.meetingconfig',   # Local settings (name, setup_status) - don't overwrite
+        'auth.user',            # Django's default user model (just in case)
+        'admin.logentry',       # Admin action history
+        'sessions.session',     # Active sessions
+        'axes.accessattempt',   # Login throttling
+        'axes.accesslog',       # Login logs
+        'axes.accessfailurelog', # Failed login logs
     }
+
+    # Models to clear before restore (order matters for foreign keys)
+    CLEARABLE_MODELS = [
+        'positions.positionassignment',  # Clear assignments first (FK to positions and users)
+        'core.positionassignment',
+        'finance.transaction',
+        'finance.budget',
+        'finance.category',
+        'literature.inventoryitem',
+        'literature.order',
+        'core.serviceposition',
+        # Don't clear users - too dangerous, could lock yourself out
+    ]
 
     def post(self, request):
         if 'backup_file' not in request.FILES:
@@ -265,6 +275,7 @@ class BackupRestoreView(ServicePositionRequiredMixin, View):
             return redirect('core:utilities')
 
         backup_file = request.FILES['backup_file']
+        replace_data = request.POST.get('replace_data') == 'on'
 
         # Validate it's JSON
         if not backup_file.name.endswith('.json'):
@@ -276,32 +287,42 @@ class BackupRestoreView(ServicePositionRequiredMixin, View):
             content = backup_file.read().decode('utf-8')
             data = json.loads(content)
 
-            # Validate backup structure and check for blocked models
+            # Validate backup structure
             if not isinstance(data, list):
                 messages.error(request, 'Invalid backup format: expected a list.')
                 return redirect('core:utilities')
 
-            blocked_found = set()
+            # Filter out blocked models (session/log data we don't want)
+            filtered_data = []
+            skipped_count = 0
+            models_in_backup = set()
             for item in data:
                 if not isinstance(item, dict) or 'model' not in item:
                     messages.error(request, 'Invalid backup format: malformed entry.')
                     return redirect('core:utilities')
                 model_name = item['model'].lower()
                 if model_name in self.BLOCKED_MODELS:
-                    blocked_found.add(item['model'])
+                    skipped_count += 1
+                else:
+                    filtered_data.append(item)
+                    models_in_backup.add(model_name)
 
-            if blocked_found:
-                messages.error(
-                    request,
-                    f'Backup contains restricted models that cannot be restored: {", ".join(sorted(blocked_found))}. '
-                    f'User and permission data must be managed through the admin interface.'
-                )
-                return redirect('core:utilities')
+            # If replace mode, clear existing data for models in the backup
+            if replace_data:
+                from django.apps import apps
+                for model_path in self.CLEARABLE_MODELS:
+                    if model_path in models_in_backup:
+                        try:
+                            app_label, model_name = model_path.split('.')
+                            model = apps.get_model(app_label, model_name)
+                            deleted_count = model.objects.all().delete()[0]
+                        except LookupError:
+                            pass  # Model doesn't exist in this installation
 
-            # Save to temp file and load
+            # Save filtered data to temp file and load
             temp_path = Path(settings.BASE_DIR) / 'backups' / 'temp_restore.json'
             temp_path.parent.mkdir(exist_ok=True)
-            temp_path.write_text(content)
+            temp_path.write_text(json.dumps(filtered_data, indent=2))
 
             # Run loaddata
             management.call_command('loaddata', str(temp_path))
@@ -318,8 +339,8 @@ class BackupRestoreView(ServicePositionRequiredMixin, View):
         return redirect('core:utilities')
 
 
-class ServerBackupDownloadView(ServicePositionRequiredMixin, View):
-    """Download a specific backup file from the server. Restricted to service positions."""
+class ServerBackupDownloadView(SuperuserRequiredMixin, View):
+    """Download a specific backup file from the server. Superuser only."""
 
     def get(self, request, filename):
         # Validate filename to prevent path traversal
@@ -340,8 +361,8 @@ class ServerBackupDownloadView(ServicePositionRequiredMixin, View):
         return response
 
 
-class ServerBackupDeleteView(ServicePositionRequiredMixin, View):
-    """Delete a specific backup file from the server. Restricted to service positions."""
+class ServerBackupDeleteView(SuperuserRequiredMixin, View):
+    """Delete a specific backup file from the server. Superuser only."""
 
     def post(self, request, filename):
         # Validate filename to prevent path traversal

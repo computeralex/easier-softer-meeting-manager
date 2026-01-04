@@ -7,6 +7,7 @@
     <h1><i class="bi bi-tools me-2"></i>Utilities</h1>
 </div>
 
+{% if user.is_superuser %}
 <div class="row">
     <!-- Backup Section -->
     <div class="col-lg-6 mb-4">
@@ -15,7 +16,11 @@
                 <h5 class="mb-0"><i class="bi bi-download me-2"></i>Backup Data</h5>
             </div>
             <div class="card-body">
-                <p class="text-muted">Download a backup of all your data as a JSON file. This includes all transactions, reports, categories, and settings.</p>
+                <p class="text-muted">Download a backup of all your data as a JSON file. This includes users, positions, transactions, and settings.</p>
+                <div class="alert alert-warning small mb-3">
+                    <i class="bi bi-shield-lock me-1"></i>
+                    <strong>Administrator only.</strong> Backups contain password hashes and sensitive data.
+                </div>
                 <a href="{% url 'core:backup_download' %}" class="btn btn-primary">
                     <i class="bi bi-download me-1"></i> Download Backup
                 </a>
@@ -30,11 +35,22 @@
                 <h5 class="mb-0"><i class="bi bi-upload me-2"></i>Restore Data</h5>
             </div>
             <div class="card-body">
-                <p class="text-muted">Restore data from a previously downloaded backup file. This will merge the backup data with existing data.</p>
-                <form method="post" action="{% url 'core:backup_restore' %}" enctype="multipart/form-data">
+                <p class="text-muted">Restore positions, transactions, and other data from a backup file.</p>
+                <div class="alert alert-info small mb-3">
+                    <i class="bi bi-shield-check me-1"></i>
+                    <strong>Users are never restored</strong> from backups (security protection).
+                </div>
+                <form method="post" action="{% url 'core:backup_restore' %}" enctype="multipart/form-data"
+                      onsubmit="return !document.getElementById('replace_data').checked || confirm('This will DELETE existing positions, transactions, and other data before restoring. Continue?');">
                     {% csrf_token %}
                     <div class="mb-3">
                         <input type="file" class="form-control" name="backup_file" accept=".json" required>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input type="checkbox" class="form-check-input" id="replace_data" name="replace_data">
+                        <label class="form-check-label" for="replace_data">
+                            Replace existing data <small class="text-muted">(clear before restore)</small>
+                        </label>
                     </div>
                     <button type="submit" class="btn btn-outline-secondary">
                         <i class="bi bi-upload me-1"></i> Restore Backup
@@ -47,7 +63,7 @@
 
 {% if backups %}
 <!-- Previous Backups -->
-<div class="card">
+<div class="card mb-4">
     <div class="card-header">
         <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Previous Backups (on server)</h5>
     </div>
@@ -85,6 +101,13 @@
             </tbody>
         </table>
     </div>
+</div>
+{% endif %}
+
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle me-2"></i>
+    Backup and restore features require administrator access.
 </div>
 {% endif %}
 {% endblock %}
