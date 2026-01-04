@@ -16,7 +16,7 @@ class MeetingConfigForm(forms.ModelForm):
 
     class Meta:
         model = MeetingConfig
-        fields = ['meeting_name', 'sobriety_term', 'sobriety_term_other']
+        fields = ['meeting_name', 'sobriety_term', 'sobriety_term_other', 'favicon']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -24,14 +24,18 @@ class MeetingConfigForm(forms.ModelForm):
         self.fields['sobriety_term'].label = 'Recovery Term'
         self.fields['sobriety_term_other'].label = 'Custom Term'
         self.fields['sobriety_term_other'].help_text = ''
+        self.fields['favicon'].label = 'Favicon'
+        self.fields['favicon'].help_text = 'Upload a favicon (32x32 or 64x64 PNG/ICO recommended)'
         self.helper = FormHelper()
         self.helper.form_method = 'post'
+        self.helper.form_enctype = 'multipart/form-data'
         self.helper.layout = Layout(
             'meeting_name',
             Row(
                 Column('sobriety_term', css_class='col-md-6'),
                 Column('sobriety_term_other', css_class='col-md-6'),
             ),
+            'favicon',
             Submit('submit', 'Save', css_class='btn-primary mt-3')
         )
 

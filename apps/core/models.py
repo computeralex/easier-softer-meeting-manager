@@ -371,6 +371,12 @@ class MeetingConfig(models.Model):
         default='positions_only',
         help_text='How to display service positions on the public site'
     )
+    favicon = models.ImageField(
+        upload_to='favicon/',
+        blank=True,
+        null=True,
+        help_text='Upload a favicon image (recommended: 32x32 or 64x64 PNG/ICO)'
+    )
 
     class Meta:
         verbose_name = 'Meeting Configuration'
