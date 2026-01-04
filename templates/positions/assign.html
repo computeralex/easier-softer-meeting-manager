@@ -41,6 +41,13 @@
                         </button>
                     </div>
                 </form>
+
+                <div class="border-top pt-3 mt-4">
+                    <p class="text-muted small mb-2">Don't see the person you're looking for?</p>
+                    <a href="{% url 'core:user_add' %}?next={% url 'positions:assign' position.pk %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-person-plus-fill me-1"></i> Add New User
+                    </a>
+                </div>
             </div>
         </div>
     </div>

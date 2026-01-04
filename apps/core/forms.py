@@ -11,6 +11,22 @@ from crispy_forms.layout import Layout, Submit, Row, Column, Field, HTML, Div
 from .models import MeetingConfig, User, ServicePosition, PositionAssignment
 
 
+class SetupWizardForm(forms.ModelForm):
+    """Form for initial setup wizard."""
+
+    class Meta:
+        model = MeetingConfig
+        fields = ['meeting_name']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['meeting_name'].label = 'What is your group called?'
+        self.fields['meeting_name'].widget.attrs.update({
+            'class': 'form-control form-control-lg',
+            'placeholder': 'e.g., Saturday Morning Group'
+        })
+
+
 class MeetingConfigForm(forms.ModelForm):
     """Form for editing global meeting settings."""
 
@@ -85,9 +101,10 @@ class UserForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['email', 'first_name', 'last_name', 'phone', 'is_active']
+        fields = ['email', 'first_name', 'last_name', 'phone', 'is_active', 'is_superuser']
 
     def __init__(self, *args, **kwargs):
+        self.request_user = kwargs.pop('request_user', None)
         super().__init__(*args, **kwargs)
         self.fields['email'].label = 'Email Address'
         self.fields['first_name'].label = 'First Name'
@@ -95,6 +112,12 @@ class UserForm(forms.ModelForm):
         self.fields['phone'].label = 'Phone Number'
         self.fields['is_active'].label = 'Account Active'
         self.fields['is_active'].help_text = 'Inactive users cannot log in'
+        self.fields['is_superuser'].label = 'Administrator'
+        self.fields['is_superuser'].help_text = 'Full access to all features and settings'
+
+        # Only superusers can grant superuser status
+        if not self.request_user or not self.request_user.is_superuser:
+            del self.fields['is_superuser']
 
         # Get Group Member as default
         group_member = ServicePosition.objects.filter(name='group_member').first()

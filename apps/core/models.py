@@ -341,6 +341,12 @@ class MeetingConfig(models.Model):
         ('names', 'Positions, vacancy, and officer first name + last initial'),
     ]
 
+    SETUP_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('dismissed', 'Dismissed'),
+        ('completed', 'Completed'),
+    ]
+
     meeting_name = models.CharField(max_length=255, default='Easier Softer Group')
     meeting_type = models.CharField(
         max_length=100,
@@ -376,6 +382,12 @@ class MeetingConfig(models.Model):
         blank=True,
         null=True,
         help_text='Upload a favicon image (recommended: 32x32 or 64x64 PNG/ICO)'
+    )
+    setup_status = models.CharField(
+        max_length=20,
+        choices=SETUP_STATUS_CHOICES,
+        default='pending',
+        help_text='Setup wizard status'
     )
 
     class Meta:

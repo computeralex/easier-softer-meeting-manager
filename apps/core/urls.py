@@ -8,6 +8,7 @@ app_name = 'core'
 
 urlpatterns = [
     path('', views.DashboardView.as_view(), name='dashboard'),
+    path('setup/', views.SetupWizardView.as_view(), name='setup_wizard'),
     path('login/', views.LoginView.as_view(), name='login'),
     path('logout/', views.LogoutView.as_view(), name='logout'),
     path('profile/', views.ProfileView.as_view(), name='profile'),

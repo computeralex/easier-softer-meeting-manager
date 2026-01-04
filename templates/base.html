@@ -122,7 +122,7 @@
                 <i class="bi bi-person me-1"></i> {{ user.email }}
             </a>
             <div class="mb-2">
-                {% if user.is_service_position_holder %}
+                {% if user.is_superuser or user.is_service_position_holder %}
                 <a href="{% url 'core:user_list' %}" class="text-white-50 small text-decoration-none d-block py-1">
                     <i class="bi bi-people me-1"></i> Users
                 </a>

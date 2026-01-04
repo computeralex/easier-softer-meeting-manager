@@ -51,6 +51,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django_htmx.middleware.HtmxMiddleware',
+    'apps.core.middleware.SetupWizardMiddleware',  # Setup wizard redirect
     'axes.middleware.AxesMiddleware',  # Brute force protection (must be last)
 ]
 

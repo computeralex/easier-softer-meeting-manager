@@ -23,7 +23,8 @@ from django.views.generic import TemplateView, FormView, ListView, CreateView, U
 from .mixins import ServicePositionRequiredMixin
 from .models import MeetingConfig, User, ServicePosition, PositionAssignment
 from .forms import (
-    MeetingConfigForm, UserProfileForm, UserForm, UserInviteForm, PasswordChangeFormStyled
+    MeetingConfigForm, UserProfileForm, UserForm, UserInviteForm, PasswordChangeFormStyled,
+    SetupWizardForm
 )
 
 
@@ -50,6 +51,86 @@ class LoginView(RedirectView):
 class LogoutView(auth_views.LogoutView):
     """Custom logout view."""
     pass
+
+
+class SetupWizardView(LoginRequiredMixin, TemplateView):
+    """Initial setup wizard for new installations."""
+    template_name = 'core/setup_wizard.html'
+
+    # Default service positions to offer
+    DEFAULT_POSITIONS = [
+        {'name': 'secretary', 'display_name': 'Secretary', 'description': 'Facilitates meetings'},
+        {'name': 'treasurer', 'display_name': 'Treasurer', 'description': 'Handles group finances'},
+        {'name': 'gsr', 'display_name': 'GSR', 'description': 'General Service Representative'},
+        {'name': 'literature', 'display_name': 'Literature Person', 'description': 'Manages literature inventory'},
+        {'name': 'greeter', 'display_name': 'Greeter', 'description': 'Welcomes newcomers'},
+        {'name': 'coffee', 'display_name': 'Coffee Maker', 'description': 'Prepares refreshments'},
+    ]
+
+    def get_step(self):
+        return self.request.session.get('setup_step', 1)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['step'] = self.get_step()
+        context['config'] = MeetingConfig.get_instance()
+        context['default_positions'] = self.DEFAULT_POSITIONS
+        context['existing_positions'] = list(ServicePosition.objects.values_list('name', flat=True))
+        return context
+
+    def post(self, request, *args, **kwargs):
+        # Handle skip actions (available on any step)
+        if 'skip_later' in request.POST:
+            request.session['setup_skipped'] = True
+            request.session.pop('setup_step', None)
+            messages.info(request, "No problem! We'll remind you next time you log in.")
+            return redirect('core:dashboard')
+        elif 'skip_forever' in request.POST:
+            config = MeetingConfig.get_instance()
+            config.setup_status = 'dismissed'
+            config.save()
+            request.session.pop('setup_step', None)
+            messages.info(request, "Setup wizard dismissed. You can configure settings anytime from the Settings page.")
+            return redirect('core:dashboard')
+
+        step = self.get_step()
+
+        if step == 1:
+            # Save group name
+            meeting_name = request.POST.get('meeting_name', '').strip()
+            if meeting_name:
+                config = MeetingConfig.get_instance()
+                config.meeting_name = meeting_name
+                config.save()
+                request.session['setup_step'] = 2
+                return redirect('core:setup_wizard')
+            else:
+                messages.error(request, "Please enter a group name.")
+                return redirect('core:setup_wizard')
+
+        elif step == 2:
+            # Create selected positions
+            selected = request.POST.getlist('positions')
+            for pos_data in self.DEFAULT_POSITIONS:
+                if pos_data['name'] in selected:
+                    ServicePosition.objects.get_or_create(
+                        name=pos_data['name'],
+                        defaults={
+                            'display_name': pos_data['display_name'],
+                            'description': pos_data['description'],
+                            'is_active': True,
+                        }
+                    )
+
+            # Complete setup
+            config = MeetingConfig.get_instance()
+            config.setup_status = 'completed'
+            config.save()
+            request.session.pop('setup_step', None)
+            messages.success(request, f'Welcome to {config.meeting_name}! Your group is ready to use.')
+            return redirect('core:dashboard')
+
+        return redirect('core:setup_wizard')
 
 
 class SettingsView(LoginRequiredMixin, TemplateView):
@@ -304,10 +385,21 @@ class UserCreateView(ServicePositionRequiredMixin, CreateView):
     template_name = 'core/user_form.html'
     success_url = reverse_lazy('core:user_list')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request_user'] = self.request.user
+        return kwargs
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Add User'
         return context
+
+    def get_success_url(self):
+        next_url = self.request.GET.get('next') or self.request.POST.get('next')
+        if next_url:
+            return next_url
+        return str(self.success_url)
 
     def form_valid(self, form):
         # Generate a random password for new users
@@ -321,7 +413,7 @@ class UserCreateView(ServicePositionRequiredMixin, CreateView):
             self.request,
             f'User "{user.email}" created. Temporary password: {password}'
         )
-        return redirect(self.success_url)
+        return redirect(self.get_success_url())
 
 
 class UserUpdateView(ServicePositionRequiredMixin, UpdateView):
@@ -330,6 +422,11 @@ class UserUpdateView(ServicePositionRequiredMixin, UpdateView):
     form_class = UserForm
     template_name = 'core/user_form.html'
     success_url = reverse_lazy('core:user_list')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request_user'] = self.request.user
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
