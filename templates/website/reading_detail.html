@@ -1,0 +1,119 @@
+{% extends 'website/base_public.html' %}
+
+{% block title %}{{ reading.title }} - {{ meeting_name }}{% endblock %}
+
+{% block meta_tags %}
+{% if reading.noindex %}<meta name="robots" content="noindex, nofollow">{% endif %}
+{% endblock %}
+
+{% block extra_styles %}
+<style>
+    /* Reading font sizes - desktop first */
+    .reading-content {
+        line-height: 1.5;
+    }
+    .reading-content p {
+        margin-bottom: 1.5em;
+    }
+    .reading-content li {
+        line-height: 1.5;
+        margin-bottom: 0.5em;
+    }
+    .reading-content ul, .reading-content ol {
+        margin-bottom: 1.5em;
+    }
+    .reading-content br {
+        display: inline;
+        margin: 0;
+    }
+    .copyright-notice {
+        font-size: 0.8em;
+        font-style: italic;
+        color: rgba(0, 0, 0, 0.6);
+        margin-top: 2em;
+        padding-top: 1em;
+        border-top: 1px solid #dee2e6;
+    }
+    .font-small .reading-content { font-size: 16px; }
+    .font-medium .reading-content { font-size: 20px; }
+    .font-large .reading-content { font-size: 24px; }
+    .font-x-large .reading-content { font-size: 28px; }
+
+    /* Tablet */
+    @media (max-width: 991.98px) {
+        .font-small .reading-content { font-size: 15px; }
+        .font-medium .reading-content { font-size: 18px; }
+        .font-large .reading-content { font-size: 22px; }
+        .font-x-large .reading-content { font-size: 26px; }
+    }
+
+    /* Mobile */
+    @media (max-width: 767.98px) {
+        .font-small .reading-content { font-size: 14px; }
+        .font-medium .reading-content { font-size: 16px; }
+        .font-large .reading-content { font-size: 20px; }
+        .font-x-large .reading-content { font-size: 24px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4 no-print">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'website:readings' %}">Readings</a>
+            </li>
+            {% if reading.category %}
+            <li class="breadcrumb-item">{{ reading.category.name }}</li>
+            {% endif %}
+            <li class="breadcrumb-item active" aria-current="page">{{ reading.title }}</li>
+        </ol>
+    </nav>
+
+    <div class="card font-{{ readings_config.display_font_size|default:'medium' }}">
+        <div class="card-header">
+            <h1 class="h4 mb-0">{{ reading.title }}</h1>
+        </div>
+        <div class="card-body">
+            <div class="reading-content">
+                {{ reading.content|safe }}
+                {% if reading.copyright_notice %}
+                <div class="copyright-notice">
+                    {{ reading.copyright_notice|linebreaks }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="d-flex justify-content-between align-items-center mt-4 no-print">
+        <div>
+            {% if prev_reading %}
+            <a href="{% url 'website:reading_detail' slug=prev_reading.slug %}" class="btn btn-outline-secondary">
+                <i class="bi bi-chevron-left me-1"></i> {{ prev_reading.title|truncatechars:30 }}
+            </a>
+            {% endif %}
+        </div>
+        <div class="text-muted small">
+            {{ current_index }} of {{ total_readings }}
+        </div>
+        <div>
+            {% if next_reading %}
+            <a href="{% url 'website:reading_detail' slug=next_reading.slug %}" class="btn btn-outline-secondary">
+                {{ next_reading.title|truncatechars:30 }} <i class="bi bi-chevron-right ms-1"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Print button -->
+    <div class="text-center mt-4 no-print">
+        <button onclick="window.print()" class="btn btn-outline-secondary">
+            <i class="bi bi-printer me-1"></i> Print
+        </button>
+    </div>
+</div>
+{% endblock %}

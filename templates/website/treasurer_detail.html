@@ -1,0 +1,150 @@
+{% extends 'website/base_public.html' %}
+
+{% block title %}Report {{ report.start_date|date:"M j" }} - {{ report.end_date|date:"M j, Y" }} - {{ meeting_name }}{% endblock %}
+
+{% block content %}
+<div class="content-container">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4 no-print">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'website:treasurer' %}">Treasurer Reports</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                {{ report.start_date|date:"M j" }} - {{ report.end_date|date:"M j, Y" }}
+            </li>
+        </ol>
+    </nav>
+
+    <!-- Report Header -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h1 class="h4 mb-0">
+                Treasurer Report: {{ report.start_date|date:"M j" }} - {{ report.end_date|date:"M j, Y" }}
+            </h1>
+        </div>
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-3">
+                    <div class="text-muted small">Total Income</div>
+                    <div class="h4 text-success mb-0">${{ report.total_income|floatformat:2 }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Total Expenses</div>
+                    <div class="h4 text-danger mb-0">${{ report.total_expenses|floatformat:2 }}</div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Net</div>
+                    <div class="h4 {% if report.net_amount >= 0 %}text-success{% else %}text-danger{% endif %} mb-0">
+                        {% if report.net_amount >= 0 %}+{% endif %}${{ report.net_amount|floatformat:2 }}
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-muted small">Ending Balance</div>
+                    <div class="h4 mb-0">${{ report.ending_balance|floatformat:2 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Income -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-arrow-down-circle me-1"></i> Income
+                    </h5>
+                </div>
+                {% if income_records %}
+                <ul class="list-group list-group-flush">
+                    {% for record in income_records %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <div>{{ record.description }}</div>
+                            <small class="text-muted">
+                                {{ record.date|date:"M j" }}
+                                {% if record.income_category %} - {{ record.income_category.name }}{% endif %}
+                            </small>
+                        </div>
+                        <span class="text-success">${{ record.amount|floatformat:2 }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="card-footer text-end">
+                    <strong>Total: <span class="text-success">${{ report.total_income|floatformat:2 }}</span></strong>
+                </div>
+                {% else %}
+                <div class="card-body text-center text-muted py-4">
+                    No income recorded
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Expenses -->
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-arrow-up-circle me-1"></i> Expenses
+                    </h5>
+                </div>
+                {% if expense_records %}
+                <ul class="list-group list-group-flush">
+                    {% for record in expense_records %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <div>{{ record.description }}</div>
+                            <small class="text-muted">
+                                {{ record.date|date:"M j" }}
+                                {% if record.category %} - {{ record.category.name }}{% endif %}
+                            </small>
+                        </div>
+                        <span class="text-danger">${{ record.amount|floatformat:2 }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                <div class="card-footer text-end">
+                    <strong>Total: <span class="text-danger">${{ report.total_expenses|floatformat:2 }}</span></strong>
+                </div>
+                {% else %}
+                <div class="card-body text-center text-muted py-4">
+                    No expenses recorded
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Balance Info -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <div class="text-muted small">Prudent Reserve</div>
+                    <div class="h5 mb-0">${{ report.prudent_reserve|floatformat:2 }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Ending Balance</div>
+                    <div class="h5 mb-0">${{ report.ending_balance|floatformat:2 }}</div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-muted small">Available (after reserve)</div>
+                    <div class="h5 mb-0">${{ report.available_balance|floatformat:2 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="text-center no-print">
+        <a href="{% url 'website:treasurer' %}" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left me-1"></i> Back to Reports
+        </a>
+        <button onclick="window.print()" class="btn btn-outline-secondary">
+            <i class="bi bi-printer me-1"></i> Print
+        </button>
+    </div>
+</div>
+{% endblock %}

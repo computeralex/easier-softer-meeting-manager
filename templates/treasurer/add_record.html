@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Add Transaction{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-plus-circle me-2"></i>Add Transaction</h1>
+    <a href="{% url 'treasurer:dashboard' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% crispy form %}
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const recordType = document.querySelector('input[name="record_type"]');
+    const categoryField = document.getElementById('div_id_category');
+    const splitField = document.getElementById('div_id_disbursement_split');
+    const descField = document.getElementById('id_description');
+
+    function updateForm() {
+        const isIncome = document.querySelector('input[name="record_type"]:checked').value === 'income';
+
+        if (categoryField) categoryField.style.display = isIncome ? 'none' : 'block';
+        if (splitField) splitField.style.display = isIncome ? 'none' : 'block';
+
+        if (isIncome && descField) {
+            descField.placeholder = 'Leave blank for "7th Tradition"';
+        }
+    }
+
+    document.querySelectorAll('input[name="record_type"]').forEach(function(radio) {
+        radio.addEventListener('change', updateForm);
+    });
+
+    updateForm();
+});
+</script>
+{% endblock %}
+{% endblock %}

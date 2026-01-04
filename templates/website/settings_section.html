@@ -1,0 +1,136 @@
+<form method="post">
+    {% csrf_token %}
+
+    <!-- Home Page Configuration -->
+    <div class="mb-4">
+        <h6 class="text-muted mb-3">
+            <i class="bi bi-house me-1"></i> Home Page
+        </h6>
+
+        <div class="mb-3">
+            <label class="form-label">Home page displays:</label>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="home_page_type"
+                       id="home_format" value="format"
+                       {% if section.context.config.home_page_type == 'format' %}checked{% endif %}>
+                <label class="form-check-label" for="home_format">
+                    <i class="bi bi-card-text me-1"></i> Meeting Format
+                </label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="home_page_type"
+                       id="home_page" value="page"
+                       {% if section.context.config.home_page_type == 'page' %}checked{% endif %}>
+                <label class="form-check-label" for="home_page">
+                    <i class="bi bi-file-text me-1"></i> CMS Page
+                </label>
+            </div>
+        </div>
+
+        {% if section.context.cms_pages %}
+        <div class="mb-3" id="cms_page_select">
+            <label class="form-label">Select CMS page for home:</label>
+            <select name="home_cms_page" class="form-select">
+                <option value="">-- Select a page --</option>
+                {% for page in section.context.cms_pages %}
+                <option value="{{ page.pk }}"
+                        {% if section.context.config.home_cms_page_id == page.pk %}selected{% endif %}>
+                    {{ page.title }}
+                </option>
+                {% endfor %}
+            </select>
+            <small class="text-muted">Only published pages are shown</small>
+        </div>
+        {% else %}
+        <div class="alert alert-info small mb-3">
+            <i class="bi bi-info-circle me-1"></i>
+            No CMS pages have been published yet.
+            <a href="{% url 'website_admin:page_create' %}">Create a page</a> to use it as your home page.
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Module Visibility -->
+    <div class="mb-4">
+        <h6 class="text-muted mb-3">
+            <i class="bi bi-eye me-1"></i> Public Module Visibility
+        </h6>
+        <p class="small text-muted mb-3">
+            Choose which modules appear in the public navigation menu.
+        </p>
+
+        <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" name="public_format_enabled"
+                   id="public_format_enabled"
+                   {% if section.context.config.public_format_enabled %}checked{% endif %}>
+            <label class="form-check-label" for="public_format_enabled">
+                <i class="bi bi-card-text me-1"></i> Meeting Format
+            </label>
+        </div>
+
+        <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" name="public_readings_enabled"
+                   id="public_readings_enabled"
+                   {% if section.context.config.public_readings_enabled %}checked{% endif %}>
+            <label class="form-check-label" for="public_readings_enabled">
+                <i class="bi bi-book me-1"></i> Readings
+            </label>
+        </div>
+
+        <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" name="public_phone_list_enabled"
+                   id="public_phone_list_enabled"
+                   {% if section.context.config.public_phone_list_enabled %}checked{% endif %}>
+            <label class="form-check-label" for="public_phone_list_enabled">
+                <i class="bi bi-telephone me-1"></i> Phone List
+            </label>
+        </div>
+
+        <div class="form-check form-switch mb-2">
+            <input class="form-check-input" type="checkbox" name="public_treasurer_enabled"
+                   id="public_treasurer_enabled"
+                   {% if section.context.config.public_treasurer_enabled %}checked{% endif %}>
+            <label class="form-check-label" for="public_treasurer_enabled">
+                <i class="bi bi-clipboard-data me-1"></i> Treasurer Reports
+            </label>
+        </div>
+    </div>
+
+    <!-- Navigation Settings -->
+    <div class="mb-4">
+        <h6 class="text-muted mb-3">
+            <i class="bi bi-list me-1"></i> Navigation
+        </h6>
+
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="show_login_link"
+                   id="show_login_link"
+                   {% if section.context.config.show_login_link %}checked{% endif %}>
+            <label class="form-check-label" for="show_login_link">
+                Show "Admin" login link in navigation
+            </label>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="mb-4">
+        <h6 class="text-muted mb-3">
+            <i class="bi bi-link-45deg me-1"></i> Quick Links
+        </h6>
+        <div class="d-flex gap-2 flex-wrap">
+            <a href="/" class="btn btn-sm btn-outline-primary" target="_blank">
+                <i class="bi bi-box-arrow-up-right me-1"></i> View Public Site
+            </a>
+            <a href="{% url 'website_admin:admin' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-globe me-1"></i> Website Admin
+            </a>
+            <a href="{% url 'website_admin:page_list' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-files me-1"></i> Manage Pages
+            </a>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        <i class="bi bi-check-lg me-1"></i> Save Settings
+    </button>
+</form>

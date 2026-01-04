@@ -1,0 +1,62 @@
+{% extends 'website/base_public.html' %}
+
+{% block title %}Treasurer Reports - {{ meeting_name }}{% endblock %}
+
+{% block content %}
+<div class="content-container">
+    <div class="text-center mb-4">
+        <h1 class="h3">Treasurer Reports</h1>
+        <p class="text-muted">Financial reports for the group</p>
+    </div>
+
+    {% if reports %}
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Report Period</th>
+                        <th class="text-end">Income</th>
+                        <th class="text-end">Expenses</th>
+                        <th class="text-end">Net</th>
+                        <th class="text-end">Balance</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in reports %}
+                    <tr>
+                        <td>
+                            <strong>{{ report.start_date|date:"M j" }} - {{ report.end_date|date:"M j, Y" }}</strong>
+                        </td>
+                        <td class="text-end text-success">
+                            ${{ report.total_income|floatformat:2 }}
+                        </td>
+                        <td class="text-end text-danger">
+                            ${{ report.total_expenses|floatformat:2 }}
+                        </td>
+                        <td class="text-end {% if report.net_amount >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            {% if report.net_amount >= 0 %}+{% endif %}${{ report.net_amount|floatformat:2 }}
+                        </td>
+                        <td class="text-end">
+                            ${{ report.ending_balance|floatformat:2 }}
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'website:treasurer_detail' report.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye me-1"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-5">
+        <i class="bi bi-clipboard-data display-1"></i>
+        <p class="mt-3">No treasurer reports have been published yet.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

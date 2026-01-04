@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<!-- Quill CSS -->
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<style>
+    .quill-container {
+        background: white;
+        min-height: 400px;
+    }
+    .ql-editor {
+        min-height: 380px;
+        line-height: 1.5;
+        font-size: 18px;
+    }
+    .ql-editor p {
+        margin-bottom: 1.5em;
+    }
+    .ql-editor li {
+        line-height: 1.5;
+        margin-bottom: 0.5em;
+    }
+    .ql-editor ul, .ql-editor ol {
+        margin-bottom: 1.5em;
+    }
+    .ql-toolbar {
+        background: #f8f9fa;
+        border-top-left-radius: 0.375rem;
+        border-top-right-radius: 0.375rem;
+    }
+    .ql-container {
+        border-bottom-left-radius: 0.375rem;
+        border-bottom-right-radius: 0.375rem;
+    }
+    .format-reference {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'business_meeting:meeting_list' %}" class="text-decoration-none text-muted">
+        <i class="bi bi-arrow-left me-1"></i> Business Meetings
+    </a>
+    <h1 class="mt-2"><i class="bi bi-clipboard-check me-2"></i>{{ title }}</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" id="meeting-form">
+                    {% csrf_token %}
+
+                    <!-- Date -->
+                    <div class="mb-3">
+                        <label for="id_date" class="form-label">Date</label>
+                        <input type="date" name="date" class="form-control" id="id_date"
+                               value="{{ form.date.value|date:'Y-m-d' }}" required>
+                        {% if form.date.errors %}
+                        <div class="invalid-feedback d-block">{{ form.date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Quill Editor -->
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <div id="quill-editor" class="quill-container"></div>
+                        <input type="hidden" name="notes" id="id_notes">
+                        {% if form.notes.errors %}
+                        <div class="invalid-feedback d-block">{{ form.notes.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">Save Meeting</button>
+                        <a href="{% url 'business_meeting:meeting_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-file-text me-1"></i> Format Reference</h6>
+                <a href="{% url 'business_meeting:format_edit' %}" class="btn btn-sm btn-outline-secondary">
+                    Edit
+                </a>
+            </div>
+            <div class="card-body format-reference small">
+                {% if format_obj.content %}
+                {{ format_obj.content|safe }}
+                {% else %}
+                <p class="text-muted mb-0">No format defined yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Quill JS -->
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script>
+    // Initialize Quill
+    const quill = new Quill('#quill-editor', {
+        theme: 'snow',
+        placeholder: 'Enter meeting notes here...',
+        modules: {
+            toolbar: [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['link'],
+                ['clean']
+            ]
+        }
+    });
+
+    // Load existing content
+    {% if form.notes.value %}
+    quill.root.innerHTML = "{{ form.notes.value|escapejs }}";
+    {% endif %}
+
+    // On form submit, copy Quill content to hidden field
+    document.getElementById('meeting-form').addEventListener('submit', function(e) {
+        const content = quill.root.innerHTML;
+        document.getElementById('id_notes').value = content;
+    });
+</script>
+{% endblock %}

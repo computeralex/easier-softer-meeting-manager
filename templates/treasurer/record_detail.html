@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Transaction Detail{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-receipt me-2"></i>Transaction Detail</h1>
+    <a href="{% url 'treasurer:dashboard' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Date</dt>
+            <dd class="col-sm-9">{{ record.date|date:"F d, Y" }}</dd>
+
+            <dt class="col-sm-3">Type</dt>
+            <dd class="col-sm-9">
+                {% if record.type == 'income' %}
+                <span class="badge bg-success">Income</span>
+                {% else %}
+                <span class="badge bg-danger">Expense</span>
+                {% endif %}
+            </dd>
+
+            <dt class="col-sm-3">Amount</dt>
+            <dd class="col-sm-9">
+                <strong>${{ record.amount|floatformat:2 }}</strong>
+            </dd>
+
+            <dt class="col-sm-3">Description</dt>
+            <dd class="col-sm-9">{{ record.description|default:"7th Tradition" }}</dd>
+
+            {% if record.category %}
+            <dt class="col-sm-3">Category</dt>
+            <dd class="col-sm-9">{{ record.category.name }}</dd>
+            {% endif %}
+
+            {% if record.notes %}
+            <dt class="col-sm-3">Notes</dt>
+            <dd class="col-sm-9">{{ record.notes }}</dd>
+            {% endif %}
+
+            {% if record.receipt %}
+            <dt class="col-sm-3">Receipt</dt>
+            <dd class="col-sm-9">
+                {% if record.receipt.name|lower|slice:"-4:" == ".pdf" %}
+                <a href="{{ record.receipt.url }}" target="_blank" class="btn btn-outline-primary">
+                    <i class="bi bi-file-pdf me-1"></i> View PDF Receipt
+                </a>
+                {% else %}
+                <a href="{{ record.receipt.url }}" target="_blank">
+                    <img src="{{ record.receipt.url }}" class="img-thumbnail" style="max-width: 300px">
+                </a>
+                {% endif %}
+            </dd>
+            {% endif %}
+        </dl>
+    </div>
+    <div class="card-footer d-flex gap-2">
+        <a href="{% url 'treasurer:edit_record' record.pk %}" class="btn btn-outline-secondary">
+            <i class="bi bi-pencil me-1"></i> Edit
+        </a>
+        <a href="{% url 'treasurer:delete_record' record.pk %}" class="btn btn-outline-danger">
+            <i class="bi bi-trash me-1"></i> Delete
+        </a>
+    </div>
+</div>
+{% endblock %}

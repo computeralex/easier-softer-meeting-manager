@@ -1,0 +1,128 @@
+{% load crispy_forms_tags %}
+
+<div class="row">
+    <!-- Settings Form -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">General Settings</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% crispy section.context.form %}
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories & Splits -->
+    <div class="col-lg-6 mb-4">
+        <!-- Income Categories -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Income Categories</h5>
+                <a href="{% url 'treasurer:add_income_category' %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i> Add
+                </a>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for category in section.context.income_categories %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>
+                        {{ category.name }}
+                        {% if category.is_default %}
+                        <span class="badge bg-success ms-1">Default</span>
+                        {% endif %}
+                    </span>
+                    <div class="d-flex gap-1">
+                        {% if not category.is_default %}
+                        <a href="{% url 'treasurer:delete_income_category' category.pk %}" class="btn btn-sm btn-outline-danger" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">No income categories yet</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Expense Categories -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Expense Categories</h5>
+                <a href="{% url 'treasurer:add_category' %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i> Add
+                </a>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for category in section.context.categories %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ category.name }}
+                    {% if category.is_disbursement %}
+                    <span class="badge bg-info">Disbursement</span>
+                    {% endif %}
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">No categories yet</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Disbursement Splits -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Disbursement Splits</h5>
+                <a href="{% url 'treasurer:add_split' %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i> Add
+                </a>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for split in section.context.splits %}
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>{{ split.name }}</strong>
+                            {% if split.is_default %}
+                            <span class="badge bg-success ms-1">Default</span>
+                            {% endif %}
+                            <br>
+                            <small class="text-muted">
+                                {% for item in split.items.all %}
+                                {{ item.name }}: {{ item.percentage }}%{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </small>
+                        </div>
+                        <div class="d-flex gap-1">
+                            <a href="{% url 'treasurer:edit_split' split.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            {% if not split.is_default %}
+                            <form method="post" action="{% url 'treasurer:set_default_split' split.pk %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Set as default">
+                                    <i class="bi bi-star"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                            <a href="{% url 'treasurer:delete_split' split.pk %}" class="btn btn-sm btn-outline-danger" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                        </div>
+                    </div>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">No splits configured</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="mt-2">
+    <a href="{% url 'treasurer:dashboard' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-currency-dollar me-1"></i> View Treasury
+    </a>
+</div>

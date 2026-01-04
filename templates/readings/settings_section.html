@@ -1,0 +1,90 @@
+{% load crispy_forms_tags %}
+
+<!-- Public Sharing -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-share me-2"></i>Public Sharing</h5>
+    </div>
+    <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div>
+                <strong>Public Reading List</strong>
+                <p class="text-muted small mb-0">Allow anyone with the link to view readings</p>
+            </div>
+            <form method="post" action="{% url 'readings:settings' %}">
+                {% csrf_token %}
+                <button type="submit" class="btn {% if section.context.config.public_enabled %}btn-success{% else %}btn-outline-secondary{% endif %}">
+                    {% if section.context.config.public_enabled %}
+                    <i class="bi bi-eye me-1"></i> Enabled
+                    {% else %}
+                    <i class="bi bi-eye-slash me-1"></i> Disabled
+                    {% endif %}
+                </button>
+            </form>
+        </div>
+
+        {% if section.context.config.public_enabled %}
+        <div class="input-group mb-3">
+            <span class="input-group-text"><i class="bi bi-link-45deg"></i></span>
+            <input type="text" class="form-control" id="readingsShareUrl" value="{{ section.context.public_url }}" readonly>
+            <button class="btn btn-outline-secondary" type="button" onclick="copyReadingsLink()">
+                <i class="bi bi-clipboard"></i>
+            </button>
+            <a href="{{ section.context.public_url }}" target="_blank" class="btn btn-outline-secondary">
+                <i class="bi bi-box-arrow-up-right"></i>
+            </a>
+        </div>
+
+        {% endif %}
+    </div>
+</div>
+
+<!-- Font Sizes -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="bi bi-fonts me-2"></i>Font Sizes</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="{% url 'readings:settings_font' %}">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label for="readings_editor_font_size" class="form-label">Editor Font Size</label>
+                    <select class="form-select" name="editor_font_size" id="readings_editor_font_size">
+                        <option value="small" {% if section.context.config.editor_font_size == 'small' %}selected{% endif %}>Small</option>
+                        <option value="medium" {% if section.context.config.editor_font_size == 'medium' %}selected{% endif %}>Medium</option>
+                        <option value="large" {% if section.context.config.editor_font_size == 'large' %}selected{% endif %}>Large</option>
+                        <option value="x-large" {% if section.context.config.editor_font_size == 'x-large' %}selected{% endif %}>Extra Large</option>
+                    </select>
+                    <div class="form-text">Font size when editing readings</div>
+                </div>
+                <div class="col-md-6">
+                    <label for="readings_display_font_size" class="form-label">Display Font Size</label>
+                    <select class="form-select" name="display_font_size" id="readings_display_font_size">
+                        <option value="small" {% if section.context.config.display_font_size == 'small' %}selected{% endif %}>Small</option>
+                        <option value="medium" {% if section.context.config.display_font_size == 'medium' %}selected{% endif %}>Medium</option>
+                        <option value="large" {% if section.context.config.display_font_size == 'large' %}selected{% endif %}>Large</option>
+                        <option value="x-large" {% if section.context.config.display_font_size == 'x-large' %}selected{% endif %}>Extra Large</option>
+                    </select>
+                    <div class="form-text">Font size on public pages</div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">
+                <i class="bi bi-check-lg me-1"></i> Save Font Settings
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function copyReadingsLink() {
+    const input = document.getElementById('readingsShareUrl');
+    input.select();
+    navigator.clipboard.writeText(input.value).then(() => {
+        const btn = event.target.closest('button');
+        const icon = btn.querySelector('i');
+        icon.className = 'bi bi-check text-success';
+        setTimeout(() => icon.className = 'bi bi-clipboard', 1500);
+    });
+}
+</script>

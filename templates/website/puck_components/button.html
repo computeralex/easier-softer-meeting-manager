@@ -1,0 +1,6 @@
+<div class="button-block py-3" style="display: flex; justify-content: {% if props.alignment == 'left' %}flex-start{% elif props.alignment == 'right' %}flex-end{% else %}center{% endif %};">
+    <a href="{{ props.url|default:'#' }}"
+       class="btn {% if props.variant == 'primary' %}btn-primary{% elif props.variant == 'secondary' %}btn-secondary{% else %}btn-outline-primary{% endif %}">
+        {{ props.text }}
+    </a>
+</div>

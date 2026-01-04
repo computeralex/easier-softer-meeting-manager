@@ -1,0 +1,50 @@
+<p class="text-muted mb-4">
+    Manage service positions, assignments, and permissions.
+</p>
+
+<div class="mb-4">
+    <h6 class="text-muted mb-3">
+        <i class="bi bi-globe me-1"></i> Public Display
+    </h6>
+    <div class="mb-3">
+        <label for="public_officers_display" class="form-label">Service positions on public site</label>
+        <select name="public_officers_display" id="public_officers_display" class="form-select">
+            {% for value, label in section.context.display_choices %}
+            <option value="{{ value }}" {% if section.context.meeting_config.public_officers_display == value %}selected{% endif %}>
+                {{ label }}
+            </option>
+            {% endfor %}
+        </select>
+        <div class="form-text">Controls how service positions appear on the public Service page.</div>
+    </div>
+</div>
+
+<div class="mb-4">
+    <h6 class="text-muted mb-3">
+        <i class="bi bi-person-badge me-1"></i> Current Service Positions
+    </h6>
+
+    {% if section.context.positions %}
+    <ul class="list-group">
+        {% for position in section.context.positions %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+                <strong>{{ position.display_name }}</strong>
+                {% if position.description %}
+                <div class="small text-muted">{{ position.description|truncatechars:60 }}</div>
+                {% endif %}
+            </div>
+            <a href="{% url 'positions:detail' position.pk %}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-eye"></i>
+            </a>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted">No positions configured.</p>
+    {% endif %}
+</div>
+
+<a href="{% url 'positions:list' %}" class="btn btn-primary">
+    <i class="bi bi-person-badge me-1"></i> Manage Service
+</a>

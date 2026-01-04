@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Confirm Import{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-check-circle me-2"></i>Confirm Import</h1>
+    <a href="{% url 'phone_list:import' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Start Over
+    </a>
+</div>
+
+<!-- Progress -->
+<div class="mb-4">
+    <div class="d-flex justify-content-between mb-2">
+        <span class="badge bg-success">Step 1: Upload</span>
+        <span class="badge bg-success">Step 2: Map Columns</span>
+        <span class="badge bg-primary">Step 3: Confirm</span>
+    </div>
+    <div class="progress" style="height: 4px;">
+        <div class="progress-bar" style="width: 100%"></div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-10">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Import Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <strong>Total Rows:</strong> {{ total_rows }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Import Mode:</strong> {{ import_mode_display }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Fields Mapped:</strong>
+                        {% for field, header in mapping.items %}
+                            {{ field }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Preview</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Email</th>
+                                <th>WhatsApp</th>
+                                <th>Sponsor</th>
+                                <th>Sobriety Date</th>
+                                <th>Time Zone</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in preview_rows %}
+                            <tr>
+                                <td>{{ row.name|default:"-" }}</td>
+                                <td>{{ row.phone|default:"-" }}</td>
+                                <td>{{ row.email|default:"-" }}</td>
+                                <td>{{ row.has_whatsapp|default:"-" }}</td>
+                                <td>{{ row.available_to_sponsor|default:"-" }}</td>
+                                <td>{{ row.sobriety_date|default:"-" }}</td>
+                                <td>{{ row.time_zone|default:"-" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">No preview data</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% if preview_rows|length < total_rows %}
+            <div class="card-footer text-muted small">
+                Showing {{ preview_rows|length }} of {{ total_rows }} rows
+                <a href="?show={{ next_show }}">(view more)</a>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if unknown_timezones %}
+        <div class="card mb-4">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Unknown Time Zones Found</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    The following time zones from your CSV don't match existing time zones.
+                    Choose how to handle each one:
+                </p>
+                <form method="post" id="import-form">
+                    {% csrf_token %}
+                    <table class="table table-sm">
+                        <thead class="table-light">
+                            <tr>
+                                <th>CSV Value</th>
+                                <th>Contacts</th>
+                                <th>Action</th>
+                                <th>Options</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for tz in unknown_timezones %}
+                            <tr>
+                                <td><code>{{ tz.value }}</code></td>
+                                <td><span class="badge bg-secondary">{{ tz.count }}</span></td>
+                                <td>
+                                    <select name="tz_action_{{ tz.value }}" class="form-select form-select-sm tz-action"
+                                            data-idx="{{ forloop.counter }}" style="width: auto;">
+                                        <option value="skip">Skip / Ignore</option>
+                                        <option value="create">Create New Time Zone</option>
+                                        <option value="map">Map to Existing</option>
+                                        <option value="other">Put in "Other" Field</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <!-- Options shown based on action -->
+                                    <div class="tz-option tz-create-{{ forloop.counter }}" style="display: none;">
+                                        <input type="text" name="tz_create_{{ tz.value }}" class="form-control form-control-sm"
+                                               placeholder="Display name (optional)" value="{{ tz.value }}">
+                                    </div>
+                                    <div class="tz-option tz-map-{{ forloop.counter }}" style="display: none;">
+                                        <select name="tz_map_{{ tz.value }}" class="form-select form-select-sm">
+                                            <option value="">-- Select --</option>
+                                            {% for existing in existing_timezones %}
+                                            <option value="{{ existing.pk }}">{{ existing.display_name }} ({{ existing.code }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <hr>
+
+                    <div class="form-check mb-3">
+                        <input type="checkbox" name="confirm" id="confirm" class="form-check-input" required>
+                        <label for="confirm" class="form-check-label">
+                            I confirm these {{ total_rows }} contacts should be imported
+                        </label>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-upload me-1"></i> Import Contacts
+                        </button>
+                        <a href="{% url 'phone_list:import' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script>
+        document.querySelectorAll('.tz-action').forEach(function(select) {
+            select.addEventListener('change', function() {
+                var idx = this.dataset.idx;
+                document.querySelector('.tz-create-' + idx).style.display = 'none';
+                document.querySelector('.tz-map-' + idx).style.display = 'none';
+
+                if (this.value === 'create') {
+                    document.querySelector('.tz-create-' + idx).style.display = 'block';
+                } else if (this.value === 'map') {
+                    document.querySelector('.tz-map-' + idx).style.display = 'block';
+                }
+            });
+        });
+        </script>
+        {% else %}
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {% crispy form %}
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Module Permissions - {{ position.display_name }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'positions:detail' position.pk %}" class="text-decoration-none text-muted">
+        <i class="bi bi-arrow-left me-1"></i> {{ position.display_name }}
+    </a>
+    <h1 class="mt-2"><i class="bi bi-shield-lock me-2"></i>Module Permissions</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Configure access for {{ position.display_name }}</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-4">
+                    Set what modules users with this position can access.
+                    <strong>Write</strong> includes read access.
+                </p>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Module</th>
+                                <th>Permission</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for field in form %}
+                            <tr>
+                                <td>{{ field.label }}</td>
+                                <td style="width: 200px;">{{ field }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'positions:detail' position.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i> Save Permissions
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle me-1"></i> Permission Levels</h6>
+            </div>
+            <div class="card-body small">
+                <dl class="mb-0">
+                    <dt>No Access</dt>
+                    <dd class="text-muted">Cannot see this module at all.</dd>
+
+                    <dt>Read Only</dt>
+                    <dd class="text-muted">Can view but not modify data.</dd>
+
+                    <dt>Read & Write</dt>
+                    <dd class="text-muted mb-0">Full access to view and modify.</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

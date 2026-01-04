@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Meeting Format{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-card-text me-2"></i>Meeting Format</h1>
+    <a href="{% url 'meeting_format:block_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> Add Block
+    </a>
+</div>
+
+<!-- Meeting Type Selector -->
+{% if meeting_types %}
+<div class="card mb-4 border-primary">
+    <div class="card-header bg-primary text-white py-2">
+        <div class="d-flex justify-content-between align-items-center">
+            <span><i class="bi bi-calendar-check me-2"></i>Tonight's Meeting Type</span>
+            <a href="{% url 'meeting_format:meeting_type_list' %}" class="btn btn-sm btn-outline-light">
+                <i class="bi bi-tags me-1"></i> Manage Types
+            </a>
+        </div>
+    </div>
+    <div class="card-body py-2">
+        <form method="post" action="{% url 'meeting_format:select_meeting_type' %}" class="d-flex align-items-center gap-3">
+            {% csrf_token %}
+            <select name="meeting_type" class="form-select form-select-sm" style="max-width: 200px;">
+                <option value="">Default (no type)</option>
+                {% for mt in meeting_types %}
+                <option value="{{ mt.pk }}" {% if config.selected_meeting_type.pk == mt.pk %}selected{% endif %}>{{ mt.name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="bi bi-check-lg me-1"></i> Set Type
+            </button>
+            {% if config.selected_meeting_type %}
+            <span class="text-success small">
+                <i class="bi bi-check-circle me-1"></i>Current: <strong>{{ config.selected_meeting_type.name }}</strong>
+            </span>
+            {% endif %}
+        </form>
+    </div>
+</div>
+{% else %}
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-tags text-muted"></i>
+            <span class="text-muted">No meeting types defined yet.</span>
+            <a href="{% url 'meeting_format:meeting_type_create' %}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-plus me-1"></i> Create Meeting Types
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Share Link -->
+<div class="card mb-4">
+    <div class="card-body py-2">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            {% if config.public_enabled %}
+            <div class="d-flex align-items-center gap-2 flex-grow-1">
+                <i class="bi bi-share text-primary"></i>
+                <span class="text-muted small">Share link:</span>
+                <input type="text" class="form-control form-control-sm" id="shareUrl" value="{{ request.scheme }}://{{ request.get_host }}/f/{{ config.share_token }}/" readonly style="max-width: 350px;">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="copyShareLink()" title="Copy link">
+                    <i class="bi bi-clipboard"></i>
+                </button>
+                <a href="{% url 'format_public:view' token=config.share_token %}" target="_blank" class="btn btn-outline-secondary btn-sm" title="View public page">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+            </div>
+            {% else %}
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-eye-slash text-muted"></i>
+                <span class="text-muted small">Public sharing disabled.</span>
+                <a href="{% url 'core:settings' %}?tab=meeting_format" class="btn btn-outline-secondary btn-sm">Enable</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if blocks %}
+        <div class="list-group list-group-flush">
+            {% for block in blocks %}
+            <div class="list-group-item">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-1">
+                            <!-- Reorder buttons -->
+                            <form method="post" action="{% url 'meeting_format:block_reorder' %}" class="me-2 d-flex flex-column">
+                                {% csrf_token %}
+                                <input type="hidden" name="block_id" value="{{ block.pk }}">
+                                <button type="submit" name="direction" value="up" class="btn btn-link btn-sm p-0 text-muted" title="Move up" {% if forloop.first %}disabled{% endif %}>
+                                    <i class="bi bi-chevron-up"></i>
+                                </button>
+                                <button type="submit" name="direction" value="down" class="btn btn-link btn-sm p-0 text-muted" title="Move down" {% if forloop.last %}disabled{% endif %}>
+                                    <i class="bi bi-chevron-down"></i>
+                                </button>
+                            </form>
+
+                            <h5 class="mb-0">
+                                {% if not block.is_active %}<span class="text-muted">{% endif %}
+                                <i class="bi bi-card-text me-1"></i>
+                                {{ block.title }}
+                                {% if not block.is_active %}</span> <span class="badge bg-secondary">Inactive</span>{% endif %}
+                            </h5>
+                        </div>
+
+                        <!-- Content summary -->
+                        <div class="ms-4 text-muted small">
+                            {% with variations=block.variations.all %}
+                            {% if variations|length == 0 %}
+                            <span class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>No content</span>
+                            {% else %}
+                            {% for var in variations %}
+                            {% if var.meeting_type %}
+                            <span class="badge bg-info">{{ var.meeting_type.name }} only</span>
+                            {% else %}
+                            <span class="badge bg-success">Always shown</span>
+                            {% endif %}
+                            {% endfor %}
+                            {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex gap-1">
+                        <a href="{% url 'meeting_format:variation_create' block_pk=block.pk %}" class="btn btn-sm btn-outline-primary" title="Add variation">
+                            <i class="bi bi-plus"></i>
+                        </a>
+                        <a href="{% url 'meeting_format:block_update' block.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit block">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="{% url 'meeting_format:block_delete' block.pk %}" class="btn btn-sm btn-outline-danger" title="Delete block">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Expandable variations (only show when multiple variations exist) -->
+                {% if block.variations.all|length > 1 %}
+                <div class="ms-4 mt-2">
+                    <button class="btn btn-link btn-sm p-0 text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#variations-{{ block.pk }}">
+                        <i class="bi bi-chevron-down"></i> Show variations
+                    </button>
+                    <div class="collapse" id="variations-{{ block.pk }}">
+                        <div class="mt-2">
+                            {% for var in block.variations.all %}
+                            <div class="card mb-2">
+                                <div class="card-body py-2 px-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            {% if var.meeting_type %}
+                                            <span class="badge bg-info">{{ var.meeting_type.name }} only</span>
+                                            {% else %}
+                                            <span class="badge bg-success">Always shown</span>
+                                            {% endif %}
+                                            {% if not var.is_active %}<span class="badge bg-secondary ms-1">Inactive</span>{% endif %}
+                                        </div>
+                                        <div class="d-flex gap-1">
+                                            <a href="{% url 'meeting_format:variation_update' var.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            <a href="{% url 'meeting_format:variation_delete' var.pk %}" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                <i class="bi bi-trash"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Centered Add Block button below the list -->
+        <div class="text-center py-3 border-top">
+            <a href="{% url 'meeting_format:block_create' %}" class="btn btn-outline-primary">
+                <i class="bi bi-plus-circle me-1"></i> Add Block
+            </a>
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-card-text display-4 mb-3"></i>
+            <p>No format blocks yet.</p>
+            <a href="{% url 'meeting_format:block_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i> Add Your First Block
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="mt-3 d-flex gap-2">
+    <a href="{% url 'core:settings' %}?tab=meeting_format" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-gear me-1"></i> Settings
+    </a>
+    {% if config.public_enabled and blocks %}
+    <a href="{% url 'format_public:print' token=config.share_token %}" target="_blank" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-printer me-1"></i> Print Preview
+    </a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyShareLink() {
+    const input = document.getElementById('shareUrl');
+    input.select();
+    navigator.clipboard.writeText(input.value).then(() => {
+        const btn = event.target.closest('button');
+        const icon = btn.querySelector('i');
+        icon.className = 'bi bi-check text-success';
+        setTimeout(() => icon.className = 'bi bi-clipboard', 1500);
+    });
+}
+</script>
+{% endblock %}

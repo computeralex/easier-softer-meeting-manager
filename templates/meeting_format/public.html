@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Format - {{ meeting_name }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background: #f8f9fa;
+            padding: 1rem;
+        }
+        .format-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        /* Font size classes - desktop first */
+        .font-small .block-content { font-size: 16px; }
+        .font-medium .block-content { font-size: 20px; }
+        .font-large .block-content { font-size: 24px; }
+        .font-x-large .block-content { font-size: 28px; }
+
+        /* Tablet */
+        @media (max-width: 991.98px) {
+            .font-small .block-content { font-size: 15px; }
+            .font-medium .block-content { font-size: 18px; }
+            .font-large .block-content { font-size: 22px; }
+            .font-x-large .block-content { font-size: 26px; }
+        }
+        /* Mobile */
+        @media (max-width: 767.98px) {
+            .font-small .block-content { font-size: 14px; }
+            .font-medium .block-content { font-size: 16px; }
+            .font-large .block-content { font-size: 20px; }
+            .font-x-large .block-content { font-size: 24px; }
+        }
+        .format-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .format-date {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        .block-card {
+            margin-bottom: 1.5rem;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .block-header {
+            background: #f8f9fa;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #dee2e6;
+            font-weight: 600;
+        }
+        .block-tabs {
+            display: flex;
+            background: #e9ecef;
+            overflow-x: auto;
+        }
+        .block-tab {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            color: #6c757d;
+            cursor: pointer;
+            white-space: nowrap;
+            border-bottom: 2px solid transparent;
+        }
+        .block-tab:hover {
+            background: #dee2e6;
+        }
+        .block-tab.active {
+            background: white;
+            color: #212529;
+            border-bottom: 2px solid #0d6efd;
+        }
+        .block-content {
+            padding: 1.5rem;
+            line-height: 1.5;
+        }
+        .block-content p {
+            margin-bottom: 1.5em;
+        }
+        .block-content p:last-child {
+            margin-bottom: 0;
+        }
+        .block-content li {
+            line-height: 1.5;
+            margin-bottom: 0.5em;
+        }
+        .block-content ul, .block-content ol {
+            margin-bottom: 1.5em;
+        }
+        .block-content br {
+            display: inline;
+            margin: 0;
+        }
+        .reading-link {
+            color: #0d6efd;
+            text-decoration: none;
+        }
+        .reading-link:hover {
+            text-decoration: underline;
+        }
+        .nav-footer {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .block-card {
+                box-shadow: none;
+                page-break-inside: avoid;
+            }
+            .block-tabs {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="format-container font-{{ config.display_font_size }}">
+        <div class="format-header">
+            <h1>{{ meeting_name }}</h1>
+            <p class="format-date">Meeting Format</p>
+        </div>
+
+        {% if meeting_types %}
+        <div class="card mb-4 no-print">
+            <div class="card-body py-2">
+                <form method="get" class="d-flex align-items-center justify-content-center gap-2 flex-wrap">
+                    <label class="small text-muted mb-0">Meeting type:</label>
+                    <select name="type" class="form-select form-select-sm" onchange="this.form.submit()" style="width: auto;">
+                        <option value="">Default</option>
+                        {% for mt in meeting_types %}
+                        <option value="{{ mt.pk }}" {% if preview_type and preview_type.pk == mt.pk %}selected{% endif %}>{{ mt.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if preview_type and preview_type != official_type %}
+                    <span class="badge bg-warning text-dark">
+                        <i class="bi bi-eye me-1"></i>Previewing
+                    </span>
+                    {% elif official_type %}
+                    <span class="badge bg-success">
+                        <i class="bi bi-check me-1"></i>{{ official_type.name }}
+                    </span>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        {% for item in format_data %}
+        {% if item.rendered_contents %}
+        <div class="block-card">
+            <div class="block-header">
+                {{ item.block.title }}
+            </div>
+
+            <div class="block-content">
+                {% for rc in item.rendered_contents %}
+                {{ rc.content|safe }}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        {% empty %}
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-card-text display-4 mb-3"></i>
+            <p>No format available.</p>
+        </div>
+        {% endfor %}
+
+        <div class="nav-footer no-print">
+            <a href="{% url 'format_public:print' token=config.share_token %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-printer me-1"></i> Print Version
+            </a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

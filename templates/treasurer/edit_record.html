@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Edit Transaction{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-pencil me-2"></i>Edit Transaction</h1>
+    <a href="{% url 'treasurer:record_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <span class="badge {% if record.type == 'income' %}bg-success{% else %}bg-danger{% endif %}">
+            {{ record.get_type_display }}
+        </span>
+        <span class="ms-2 text-muted">Created {{ record.created_at|date:"M d, Y" }}</span>
+    </div>
+    <div class="card-body">
+        {% crispy form %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,27 @@
+<div class="card h-100">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="bi bi-person-badge me-1"></i>
+            Service
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="d-flex justify-content-between mb-2">
+            <span>Total Positions:</span>
+            <strong>{{ widget_data.position_count }}</strong>
+        </div>
+        <div class="d-flex justify-content-between text-muted small">
+            <span>Available:</span>
+            <span class="{% if widget_data.available_count > 0 %}text-warning fw-bold{% endif %}">{{ widget_data.available_count }}</span>
+        </div>
+        <div class="d-flex justify-content-between text-muted small">
+            <span>Expiring Soon:</span>
+            <span>{{ widget_data.expiring_count }}</span>
+        </div>
+    </div>
+    <div class="card-footer">
+        <a href="{% url 'positions:list' %}" class="btn btn-sm btn-outline-primary w-100">
+            Open Service
+        </a>
+    </div>
+</div>

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} Meeting Type{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="bi bi-tags me-2"></i>
+        {% if object %}Edit Meeting Type{% else %}Add Meeting Type{% endif %}
+    </h1>
+    <a href="{% url 'meeting_format:meeting_type_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                {% crispy form %}
+            </div>
+        </div>
+
+        {% if not object %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-lightbulb me-1"></i> Common Meeting Types</h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-2">Click to use as the name:</p>
+                <div class="d-flex flex-wrap gap-2">
+                    {% for suggestion in "Speaker,Topic,Literature,Step Study,Meditation,Big Book,Traditions,Open,Closed"|make_list %}
+                    {% endfor %}
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('id_name').value='Speaker'">Speaker</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('id_name').value='Topic'">Topic</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('id_name').value='Literature'">Literature</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('id_name').value='Step Study'">Step Study</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('id_name').value='Meditation'">Meditation</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('id_name').value='Big Book'">Big Book</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('id_name').value='Traditions'">Traditions</button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

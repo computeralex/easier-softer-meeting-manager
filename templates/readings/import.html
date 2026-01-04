@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Import Reading{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-upload me-2"></i>Import Reading</h1>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <p class="text-muted mb-4">
+            Paste the reading text below. Line breaks will be preserved.
+        </p>
+        {% crispy form %}
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{% url 'readings:list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to Readings
+    </a>
+</div>
+{% endblock %}

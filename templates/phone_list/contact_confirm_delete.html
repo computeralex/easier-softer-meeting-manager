@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Delete Contact{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>Delete Contact
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>Are you sure you want to delete this contact?</p>
+                <div class="alert alert-secondary">
+                    <strong>{{ object.name }}</strong>
+                    {% if object.phone %}<br>{{ object.phone }}{% endif %}
+                    {% if object.email %}<br>{{ object.email }}{% endif %}
+                </div>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i> Delete
+                        </button>
+                        <a href="{% url 'phone_list:list' %}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Page Settings{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-gear me-2"></i>Page Settings</h1>
+    <div class="d-flex gap-2">
+        <a href="{% url 'website_admin:page_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+        {% if object %}
+        <a href="{% url 'website_admin:puck_editor' object.pk %}" class="btn btn-primary">
+            <i class="bi bi-palette me-1"></i> Edit Content
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{% if object %}{{ object.title }}{% else %}New Page{% endif %}</h5>
+            </div>
+            <div class="card-body">
+                {% if form.errors %}
+                <div class="alert alert-danger mb-3">
+                    <strong>Please fix the errors below:</strong>
+                    {{ form.errors }}
+                </div>
+                {% endif %}
+                <form method="post" id="page-form">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="id_title" class="form-label">Title</label>
+                        <input type="text" name="title" id="id_title" class="form-control"
+                               value="{{ form.title.value|default:'' }}" required>
+                        {% if form.title.errors %}
+                        <div class="invalid-feedback d-block">{{ form.title.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_slug" class="form-label">Slug</label>
+                        <div class="input-group">
+                            <span class="input-group-text">/pages/</span>
+                            <input type="text" name="slug" id="id_slug" class="form-control"
+                                   value="{{ form.slug.value|default:'' }}">
+                            <span class="input-group-text">/</span>
+                        </div>
+                        <small class="text-muted">Leave blank to auto-generate from title</small>
+                        {% if form.slug.errors %}
+                        <div class="invalid-feedback d-block">{{ form.slug.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <hr class="my-4">
+                    <h6 class="text-muted mb-3"><i class="bi bi-search me-1"></i> SEO Settings</h6>
+
+                    <div class="mb-3">
+                        <label for="id_meta_title" class="form-label">Meta Title</label>
+                        <input type="text" name="meta_title" id="id_meta_title" class="form-control"
+                               value="{{ form.meta_title.value|default:'' }}" maxlength="70">
+                        <small class="text-muted">Leave blank to use page title. Max 70 characters.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_meta_description" class="form-label">Meta Description</label>
+                        <textarea name="meta_description" id="id_meta_description" class="form-control"
+                                  rows="2" maxlength="160">{{ form.meta_description.value|default:'' }}</textarea>
+                        <small class="text-muted">Brief description for search engines. Max 160 characters.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Featured Image</label>
+                        <input type="hidden" name="featured_image" id="id_featured_image"
+                               value="{{ form.featured_image.value|default:'' }}">
+                        <div id="featured-image-preview" class="mb-2" style="{% if not form.featured_image.value %}display:none{% endif %}">
+                            <img src="{{ form.featured_image.value|default:'' }}" alt="Featured"
+                                 style="max-width: 200px; max-height: 150px; border-radius: 4px; border: 1px solid #ddd;">
+                            <button type="button" class="btn btn-sm btn-outline-danger ms-2" onclick="clearFeaturedImage()">
+                                <i class="bi bi-x"></i> Remove
+                            </button>
+                        </div>
+                        <div>
+                            <input type="file" id="featured-image-input" accept="image/*" class="form-control" style="max-width: 300px;">
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" name="is_published"
+                                       id="id_is_published" {% if form.is_published.value or not object %}checked{% endif %}>
+                                <label class="form-check-label" for="id_is_published">Published</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-check form-switch mb-3">
+                                <input class="form-check-input" type="checkbox" name="show_in_nav"
+                                       id="id_show_in_nav" {% if form.show_in_nav.value %}checked{% endif %}>
+                                <label class="form-check-label" for="id_show_in_nav">Show in Navigation</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="id_nav_order" class="form-label">Nav Order</label>
+                                <input type="number" name="nav_order" id="id_nav_order" class="form-control"
+                                       value="{{ form.nav_order.value|default:0 }}" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            {% if object %}
+                            <i class="bi bi-check-lg me-1"></i> Save Settings
+                            {% else %}
+                            <i class="bi bi-plus-circle me-1"></i> Create Page
+                            {% endif %}
+                        </button>
+                        <a href="{% url 'website_admin:page_list' %}" class="btn btn-outline-secondary ms-2">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle me-1"></i> Help</h6>
+            </div>
+            <div class="card-body small text-muted">
+                <p><strong>Title:</strong> The page title shown in navigation and as the heading.</p>
+                <p><strong>Slug:</strong> The URL-friendly name. Example: "about-us" creates /pages/about-us/</p>
+                <p><strong>Published:</strong> Only published pages are visible to visitors.</p>
+                <p><strong>Show in Navigation:</strong> Add this page to the public menu.</p>
+                <p class="mb-0"><strong>Nav Order:</strong> Lower numbers appear first in the menu.</p>
+            </div>
+        </div>
+
+        {% if object %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-palette me-1"></i> Page Content</h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">Use the visual editor to design your page content with drag-and-drop blocks.</p>
+                <a href="{% url 'website_admin:puck_editor' object.pk %}" class="btn btn-primary w-100">
+                    <i class="bi bi-palette me-1"></i> Open Visual Editor
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-generate slug from title
+    const titleInput = document.getElementById('id_title');
+    const slugInput = document.getElementById('id_slug');
+
+    titleInput.addEventListener('blur', function() {
+        if (!slugInput.value) {
+            slugInput.value = titleInput.value
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)/g, '');
+        }
+    });
+
+    // Featured image upload
+    const imageInput = document.getElementById('featured-image-input');
+    const hiddenInput = document.getElementById('id_featured_image');
+    const previewDiv = document.getElementById('featured-image-preview');
+    const previewImg = previewDiv.querySelector('img');
+
+    imageInput.addEventListener('change', async function() {
+        const file = this.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('{% url "website_admin:upload_image" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                },
+                body: formData,
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                hiddenInput.value = result.url;
+                previewImg.src = result.url;
+                previewDiv.style.display = 'block';
+            } else {
+                alert(result.error || 'Upload failed');
+            }
+        } catch (err) {
+            alert('Upload failed. Please try again.');
+        }
+    });
+
+    function clearFeaturedImage() {
+        hiddenInput.value = '';
+        previewDiv.style.display = 'none';
+        imageInput.value = '';
+    }
+</script>
+{% endblock %}

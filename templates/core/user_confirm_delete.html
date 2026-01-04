@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Delete User{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-trash me-2"></i>Delete User</h1>
+    <a href="{% url 'core:user_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Confirm Deletion</h5>
+            </div>
+            <div class="card-body">
+                <p>Are you sure you want to delete the user <strong>{{ object.email }}</strong>?</p>
+                {% if object.get_full_name %}
+                <p class="text-muted">Name: {{ object.get_full_name }}</p>
+                {% endif %}
+                <p class="text-danger"><strong>This action cannot be undone.</strong></p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i> Delete User
+                        </button>
+                        <a href="{% url 'core:user_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

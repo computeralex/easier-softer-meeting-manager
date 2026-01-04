@@ -1,0 +1,19 @@
+<div class="card h-100">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="bi bi-card-text me-1"></i>
+            Meeting Format
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="d-flex justify-content-between mb-2">
+            <span>Blocks:</span>
+            <strong>{{ widget_data.block_count }}</strong>
+        </div>
+    </div>
+    <div class="card-footer">
+        <a href="{% url 'meeting_format:block_list' %}" class="btn btn-sm btn-outline-primary w-100">
+            Open Format
+        </a>
+    </div>
+</div>

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Website{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-globe me-2"></i>Website</h1>
+    <a href="{% url 'website_admin:page_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> Add Page
+    </a>
+</div>
+
+<div class="row">
+    <!-- Configuration Overview -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Configuration</h5>
+                <a href="{% url 'core:settings' %}?tab=website" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-pencil"></i> Edit
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <small class="text-muted d-block">Home Page Type</small>
+                    <strong>
+                        {% if config.home_page_type == 'format' %}
+                        <i class="bi bi-card-text me-1"></i> Meeting Format
+                        {% else %}
+                        <i class="bi bi-file-text me-1"></i> CMS Page
+                        {% if config.home_cms_page %}({{ config.home_cms_page.title }}){% endif %}
+                        {% endif %}
+                    </strong>
+                </div>
+                <div class="mb-3">
+                    <small class="text-muted d-block">Public Modules</small>
+                    {% if config.public_format_enabled %}<span class="badge bg-success me-1">Format</span>{% endif %}
+                    {% if config.public_readings_enabled %}<span class="badge bg-success me-1">Readings</span>{% endif %}
+                    {% if config.public_phone_list_enabled %}<span class="badge bg-success me-1">Phone List</span>{% endif %}
+                    {% if not config.public_format_enabled and not config.public_readings_enabled and not config.public_phone_list_enabled %}
+                    <span class="text-muted">None enabled</span>
+                    {% endif %}
+                </div>
+                <div>
+                    <small class="text-muted d-block">Login Link</small>
+                    {% if config.show_login_link %}
+                    <span class="badge bg-info">Visible</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Hidden</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="/" class="btn btn-sm btn-outline-primary w-100" target="_blank">
+                    <i class="bi bi-box-arrow-up-right me-1"></i> View Public Site
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pages Overview -->
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100 d-flex flex-column">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-files me-2"></i>CMS Pages</h5>
+                <span class="badge bg-primary">{{ pages|length }} total</span>
+            </div>
+            {% if pages %}
+            <ul class="list-group list-group-flush">
+                {% for page in pages|slice:":5" %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>
+                        {{ page.title }}
+                        {% if page.is_published %}
+                        <span class="badge bg-success ms-1">Published</span>
+                        {% else %}
+                        <span class="badge bg-secondary ms-1">Draft</span>
+                        {% endif %}
+                    </span>
+                    <div class="d-flex gap-1">
+                        {% if page.is_published %}
+                        <a href="{{ page.get_absolute_url }}" class="btn btn-sm btn-outline-secondary" title="View" target="_blank">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'website_admin:page_update' page.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="card-body text-center text-muted py-4">
+                <i class="bi bi-file-text fs-1"></i>
+                <p class="mt-2 mb-0">No pages yet</p>
+            </div>
+            {% endif %}
+            <div class="card-footer mt-auto">
+                <a href="{% url 'website_admin:page_list' %}" class="btn btn-sm btn-outline-primary w-100">
+                    <i class="bi bi-list me-1"></i> Manage Pages
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

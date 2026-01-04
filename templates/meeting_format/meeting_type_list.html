@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Meeting Types{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-tags me-2"></i>Meeting Types</h1>
+    <div class="d-flex gap-2">
+        <a href="{% url 'meeting_format:block_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back to Format
+        </a>
+        <a href="{% url 'meeting_format:meeting_type_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i> Add Type
+        </a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body py-2">
+        <div class="text-muted small">
+            <i class="bi bi-info-circle me-1"></i>
+            Meeting types define the different formats your meeting can have (e.g., Speaker, Topic, Literature).
+            When you select a type for tonight's meeting, all content associated with that type will be displayed.
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if meeting_types %}
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Name</th>
+                    <th class="text-center">Content Blocks</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for meeting_type in meeting_types %}
+                <tr>
+                    <td>
+                        <strong>{{ meeting_type.name }}</strong>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-secondary">{{ meeting_type.variation_count }}</span>
+                    </td>
+                    <td class="text-center">
+                        {% if meeting_type.is_active %}
+                        <span class="badge bg-success">Active</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'meeting_format:meeting_type_update' meeting_type.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="{% url 'meeting_format:meeting_type_delete' meeting_type.pk %}" class="btn btn-sm btn-outline-danger" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center text-muted py-5">
+            <i class="bi bi-tags display-4 mb-3"></i>
+            <p>No meeting types yet.</p>
+            <p class="small">Create types like "Speaker", "Topic", "Literature", "Step Study" to organize your meeting formats.</p>
+            <a href="{% url 'meeting_format:meeting_type_create' %}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i> Add Your First Type
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

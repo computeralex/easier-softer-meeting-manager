@@ -1,0 +1,166 @@
+{% load crispy_forms_tags %}
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Public Sharing</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <strong>Public Access</strong>
+                        <p class="text-muted small mb-0">Allow anyone with the link to view the phone list</p>
+                    </div>
+                    <form method="post" action="{% url 'phone_list:settings' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm {% if section.context.config.is_active %}btn-success{% else %}btn-outline-secondary{% endif %}">
+                            {% if section.context.config.is_active %}Enabled{% else %}Disabled{% endif %}
+                        </button>
+                    </form>
+                </div>
+
+                <hr>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Share Link</strong></label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" value="{{ section.context.public_url }}" id="share-url" readonly>
+                        <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText(document.getElementById('share-url').value); alert('Copied!');">
+                            <i class="bi bi-clipboard"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted">Share this link with meeting members</small>
+                </div>
+
+                <form method="post" action="{% url 'phone_list:regenerate' %}" class="mt-3">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning btn-sm"
+                            onclick="return confirm('Generate a new link? The old link will stop working.')">
+                        <i class="bi bi-arrow-repeat me-1"></i> Regenerate Link
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Time Zones</h5>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for tz in section.context.time_zones %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>
+                        {{ tz.display_name }}
+                        <span class="badge bg-secondary ms-1">{{ tz.code }}</span>
+                        {% if not tz.meeting %}
+                        <span class="badge bg-info ms-1">Default</span>
+                        {% endif %}
+                    </span>
+                    {% if tz.meeting %}
+                    <form method="post" action="{% url 'phone_list:delete_timezone' tz.pk %}" class="d-inline">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"
+                                onclick="return confirm('Delete this time zone?')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                    {% endif %}
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">No time zones configured</li>
+                {% endfor %}
+            </ul>
+            <div class="card-footer">
+                <form method="post" action="{% url 'phone_list:add_timezone' %}" class="row g-2 align-items-end">
+                    {% csrf_token %}
+                    <div class="col-4">
+                        <label class="form-label small">Code</label>
+                        <input type="text" name="code" class="form-control form-control-sm" required maxlength="20">
+                    </div>
+                    <div class="col-5">
+                        <label class="form-label small">Display Name</label>
+                        <input type="text" name="display_name" class="form-control form-control-sm" required maxlength="100">
+                    </div>
+                    <div class="col-3">
+                        <button type="submit" class="btn btn-sm btn-primary w-100">
+                            <i class="bi bi-plus"></i> Add
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">PDF Export Settings</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'phone_list:update_pdf_settings' %}">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 col-lg-3 mb-3">
+                            <label class="form-label">Layout</label>
+                            <select name="pdf_layout" class="form-select">
+                                <option value="table" {% if section.context.config.pdf_layout == 'table' %}selected{% endif %}>Table</option>
+                                <option value="two_column" {% if section.context.config.pdf_layout == 'two_column' %}selected{% endif %}>Two-Column List</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 col-lg-3 mb-3">
+                            <label class="form-label">Font Size</label>
+                            <select name="pdf_font_size" class="form-select">
+                                <option value="8" {% if section.context.config.pdf_font_size == 8 %}selected{% endif %}>8pt (Very Compact)</option>
+                                <option value="9" {% if section.context.config.pdf_font_size == 9 %}selected{% endif %}>9pt (Compact)</option>
+                                <option value="10" {% if section.context.config.pdf_font_size == 10 %}selected{% endif %}>10pt (Standard)</option>
+                                <option value="11" {% if section.context.config.pdf_font_size == 11 %}selected{% endif %}>11pt (Large)</option>
+                                <option value="12" {% if section.context.config.pdf_font_size == 12 %}selected{% endif %}>12pt (Extra Large)</option>
+                            </select>
+                        </div>
+                        <div class="col-lg-6 mb-3">
+                            <label class="form-label">Columns to Include</label>
+                            <div class="d-flex flex-wrap gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="pdf_show_phone" id="pdf_show_phone_global" {% if section.context.config.pdf_show_phone %}checked{% endif %}>
+                                    <label class="form-check-label" for="pdf_show_phone_global">Phone / WhatsApp</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="pdf_show_email" id="pdf_show_email_global" {% if section.context.config.pdf_show_email %}checked{% endif %}>
+                                    <label class="form-check-label" for="pdf_show_email_global">Email</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="pdf_show_time_zone" id="pdf_show_time_zone_global" {% if section.context.config.pdf_show_time_zone %}checked{% endif %}>
+                                    <label class="form-check-label" for="pdf_show_time_zone_global">Time Zone</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="pdf_show_sobriety" id="pdf_show_sobriety_global" {% if section.context.config.pdf_show_sobriety %}checked{% endif %}>
+                                    <label class="form-check-label" for="pdf_show_sobriety_global">{{ section.context.sobriety_term }} Date</label>
+                                </div>
+                            </div>
+                            <small class="text-muted">Name / Sponsor is always included</small>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Footer Text</label>
+                        <input type="text" name="pdf_footer_text" class="form-control" value="{{ section.context.config.pdf_footer_text }}" maxlength="500">
+                        <small class="text-muted">Leave blank for no footer</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-lg me-1"></i> Save Settings
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{% url 'phone_list:list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-telephone me-1"></i> View Phone List
+    </a>
+</div>

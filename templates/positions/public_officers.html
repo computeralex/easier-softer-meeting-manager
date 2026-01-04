@@ -1,0 +1,82 @@
+{% extends "website/base_public.html" %}
+
+{% block title %}Service - {{ meeting_name }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1 class="mb-4">Service</h1>
+
+    {% if hidden %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        Service position information is not publicly available.
+    </div>
+    {% elif positions %}
+    <p class="text-muted mb-4">
+        Click on a position to see more details about it.
+    </p>
+
+    <div class="accordion" id="positionsAccordion">
+        {% for position in positions %}
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+                <button class="accordion-button collapsed" type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#position-{{ position.pk }}"
+                        aria-expanded="false"
+                        aria-controls="position-{{ position.pk }}">
+                    <span class="me-auto">{{ position.display_name }}</span>
+                    {% if position.is_filled %}
+                        <span class="badge bg-success ms-2">Filled</span>
+                        {% if show_holder_names and position.primary_holders_list %}
+                            <span class="text-muted ms-2 small">
+                                {{ position.primary_holders_list.0.user.get_short_name }}
+                            </span>
+                        {% endif %}
+                    {% else %}
+                        <span class="badge bg-warning text-dark ms-2">Available</span>
+                    {% endif %}
+                </button>
+            </h2>
+            <div id="position-{{ position.pk }}" class="accordion-collapse collapse"
+                 data-bs-parent="#positionsAccordion">
+                <div class="accordion-body">
+                    {% if position.description %}
+                    <p>{{ position.description }}</p>
+                    {% endif %}
+
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">Term Length</dt>
+                        <dd class="col-sm-8">{{ position.term_months }} months</dd>
+
+                        {% if position.sobriety_requirement %}
+                        <dt class="col-sm-4">{{ sobriety_term }} Requirement</dt>
+                        <dd class="col-sm-8">{{ position.sobriety_requirement }}</dd>
+                        {% endif %}
+                    </dl>
+
+                    {% if position.duties %}
+                    <hr>
+                    <h6>Duties</h6>
+                    {{ position.duties|linebreaks }}
+                    {% endif %}
+
+                    {% if show_holder_names and position.primary_holders_list %}
+                    <hr>
+                    <h6>Current Holder{% if position.primary_holders_list|length > 1 %}s{% endif %}</h6>
+                    <ul class="list-unstyled mb-0">
+                        {% for assignment in position.primary_holders_list %}
+                        <li>{{ assignment.user.get_short_name }}</li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted">No service positions are currently configured.</p>
+    {% endif %}
+</div>
+{% endblock %}

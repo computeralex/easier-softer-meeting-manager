@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}End Term - {{ assignment.user }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'positions:detail' position.pk %}" class="text-decoration-none text-muted">
+        <i class="bi bi-arrow-left me-1"></i> {{ position.display_name }}
+    </a>
+    <h1 class="mt-2"><i class="bi bi-calendar-x me-2"></i>End Term</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">End Term for {{ assignment.user.get_full_name }}</h5>
+            </div>
+            <div class="card-body">
+                <p class="mb-4">
+                    <strong>{{ assignment.user.get_full_name }}</strong> has held
+                    <strong>{{ position.display_name }}</strong>
+                    since <strong>{{ assignment.start_date|date:"M d, Y" }}</strong>.
+                </p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'positions:detail' position.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="bi bi-calendar-x me-1"></i> End Term
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

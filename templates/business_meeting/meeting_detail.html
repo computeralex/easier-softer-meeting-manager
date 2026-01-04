@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'business_meeting:meeting_list' %}" class="text-decoration-none text-muted">
+        <i class="bi bi-arrow-left me-1"></i> Business Meetings
+    </a>
+    <h1 class="mt-2"><i class="bi bi-clipboard-check me-2"></i>{{ title }}</h1>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>
+            <i class="bi bi-calendar me-1"></i> {{ business_meeting.date|date:"F j, Y" }}
+        </span>
+        <div class="d-flex gap-2">
+            <a href="{% url 'business_meeting:meeting_update' business_meeting.pk %}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-pencil me-1"></i> Edit
+            </a>
+            <a href="{% url 'business_meeting:meeting_delete' business_meeting.pk %}" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-trash me-1"></i> Delete
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if business_meeting.notes %}
+        <div class="content-display">
+            {{ business_meeting.notes|safe }}
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No notes recorded for this meeting.</p>
+        {% endif %}
+    </div>
+    <div class="card-footer text-muted small">
+        {% if business_meeting.created_by %}
+        Created by {{ business_meeting.created_by.get_short_name }} on {{ business_meeting.created_at|date:"M j, Y g:i A" }}
+        {% endif %}
+        {% if business_meeting.updated_by and business_meeting.updated_at != business_meeting.created_at %}
+        <br>Last updated by {{ business_meeting.updated_by.get_short_name }} on {{ business_meeting.updated_at|date:"M j, Y g:i A" }}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

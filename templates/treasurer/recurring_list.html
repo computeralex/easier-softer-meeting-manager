@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Recurring Expenses{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-arrow-repeat me-2"></i>Recurring Expenses</h1>
+    <div class="d-flex gap-2">
+        <a href="{% url 'treasurer:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+        <a href="{% url 'treasurer:add_recurring' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i> Add Recurring
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if recurring_expenses %}
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Description</th>
+                    <th>Amount</th>
+                    <th>Frequency</th>
+                    <th>Next Due</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expense in recurring_expenses %}
+                <tr>
+                    <td>{{ expense.description }}</td>
+                    <td>${{ expense.amount|floatformat:2 }}</td>
+                    <td>{{ expense.get_frequency_display }}</td>
+                    <td>{{ expense.next_due_date|date:"M d, Y" }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'treasurer:delete_recurring' expense.pk %}"
+                           class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-arrow-repeat fs-1"></i>
+            <p class="mt-2">No recurring expenses set up.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

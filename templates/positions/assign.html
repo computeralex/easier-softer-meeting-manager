@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Assign User to {{ position.display_name }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'positions:detail' position.pk %}" class="text-decoration-none text-muted">
+        <i class="bi bi-arrow-left me-1"></i> {{ position.display_name }}
+    </a>
+    <h1 class="mt-2"><i class="bi bi-person-plus me-2"></i>Assign User</h1>
+</div>
+
+{% if warn_multiple %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle me-1"></i>
+    <strong>This position already has holder(s):</strong>
+    {% for assignment in current_holders %}
+        {{ assignment.user.get_full_name }}{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+    <br>
+    <small>Assigning another user will result in multiple holders for this position.</small>
+</div>
+{% endif %}
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Assign to {{ position.display_name }}</h5>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form|crispy }}
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'positions:detail' position.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-person-plus me-1"></i> Assign User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle me-1"></i> Position Info</h6>
+            </div>
+            <div class="card-body">
+                <dl class="mb-0">
+                    <dt>Default Term</dt>
+                    <dd>{{ position.term_months }} months</dd>
+
+                    {% if position.sobriety_requirement %}
+                    <dt>Sobriety Requirement</dt>
+                    <dd>{{ position.sobriety_requirement }}</dd>
+                    {% endif %}
+
+                    {% if position.duties %}
+                    <dt>Duties</dt>
+                    <dd>{{ position.duties|truncatechars:200 }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

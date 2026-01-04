@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-file-text me-2"></i>Reports</h1>
+    <div class="d-flex gap-2">
+        <a href="{% url 'treasurer:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+        <a href="{% url 'treasurer:create_report' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i> Create Report
+        </a>
+    </div>
+</div>
+
+<!-- Current Period Preview -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Current Period ({{ next_period.start|date:"M d" }} - {{ next_period.end|date:"M d, Y" }})</h5>
+    </div>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-4">
+                <h6 class="text-muted">Income</h6>
+                <h4 class="text-success">${{ period_totals.total_income|floatformat:2 }}</h4>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-muted">Expenses</h6>
+                <h4 class="text-danger">${{ period_totals.total_expenses|floatformat:2 }}</h4>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-muted">Net</h6>
+                <h4 class="{% if period_totals.net_amount >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    ${{ period_totals.net_amount|floatformat:2 }}
+                </h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Report List -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Report History</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if reports %}
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Period</th>
+                    <th class="text-end">Income</th>
+                    <th class="text-end">Expenses</th>
+                    <th class="text-end">Net</th>
+                    <th>Status</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td>{{ report.start_date|date:"M d" }} - {{ report.end_date|date:"M d, Y" }}</td>
+                    <td class="text-end text-success">${{ report.total_income|floatformat:2 }}</td>
+                    <td class="text-end text-danger">${{ report.total_expenses|floatformat:2 }}</td>
+                    <td class="text-end">
+                        <strong class="{% if report.net_amount >= 0 %}text-success{% else %}text-danger{% endif %}">
+                            ${{ report.net_amount|floatformat:2 }}
+                        </strong>
+                    </td>
+                    <td>
+                        {% if report.is_archived %}
+                        <span class="badge bg-secondary">Archived</span>
+                        {% else %}
+                        <span class="badge bg-success">Active</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <div class="btn-group btn-group-sm" role="group">
+                            <a href="{% url 'treasurer:report_detail' report.pk %}"
+                               class="btn btn-outline-secondary" title="View">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'treasurer:report_pdf' report.pk %}"
+                               class="btn btn-outline-secondary" title="Download PDF">
+                                <i class="bi bi-file-pdf"></i>
+                            </a>
+                            {% if not report.is_archived %}
+                            <button type="button" class="btn btn-outline-secondary" title="Archive"
+                                    onclick="if(confirm('Archive this report?')) document.getElementById('archive-form-{{ report.pk }}').submit();">
+                                <i class="bi bi-archive"></i>
+                            </button>
+                            {% else %}
+                            <button type="button" class="btn btn-outline-danger" title="Delete"
+                                    onclick="if(confirm('Permanently delete this archived report?')) document.getElementById('delete-form-{{ report.pk }}').submit();">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                        {% if not report.is_archived %}
+                        <form id="archive-form-{{ report.pk }}" method="post"
+                              action="{% url 'treasurer:archive_report' report.pk %}" style="display:none">
+                            {% csrf_token %}
+                        </form>
+                        {% else %}
+                        <form id="delete-form-{{ report.pk }}" method="post"
+                              action="{% url 'treasurer:delete_report' report.pk %}" style="display:none">
+                            {% csrf_token %}
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-file-earmark fs-1"></i>
+            <p class="mt-2">No reports yet.</p>
+            <a href="{% url 'treasurer:create_report' %}" class="btn btn-primary">
+                Create First Report
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}All Transactions{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-list-ul me-2"></i>All Transactions</h1>
+    <div class="d-flex gap-2">
+        <a href="{% url 'treasurer:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+        <a href="{% url 'treasurer:add_record' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i> Add Transaction
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        {% if records %}
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th class="text-end">Amount</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record.date|date:"M d, Y" }}</td>
+                    <td>{{ record.description|default:"7th Tradition" }}</td>
+                    <td>
+                        {% if record.category %}
+                        <span class="badge bg-secondary">{{ record.category.name }}</span>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        {% if record.type == 'income' %}
+                        <span class="text-success">+${{ record.amount|floatformat:2 }}</span>
+                        {% else %}
+                        <span class="text-danger">-${{ record.amount|floatformat:2 }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <div class="d-flex gap-1 justify-content-end">
+                            <a href="{% url 'treasurer:record_detail' record.pk %}"
+                               class="btn btn-sm btn-outline-secondary" title="View">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'treasurer:edit_record' record.pk %}"
+                               class="btn btn-sm btn-outline-secondary" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <nav aria-label="Transaction pagination" class="border-top">
+            <ul class="pagination justify-content-center mb-0 py-3">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                        <i class="bi bi-chevron-left"></i> Previous
+                    </a>
+                </li>
+                {% endif %}
+
+                <li class="page-item disabled">
+                    <span class="page-link">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                        Next <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+
+        {% else %}
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-inbox fs-1"></i>
+            <p class="mt-2">No transactions yet.</p>
+            <a href="{% url 'treasurer:add_record' %}" class="btn btn-primary">
+                Add First Transaction
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

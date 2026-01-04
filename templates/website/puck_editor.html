@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if page.pk %}Edit: {{ page.title }}{% else %}Create New Page{% endif %} - Puck Editor</title>
+    <link rel="stylesheet" href="{% static 'website/puck/editor.css' %}">
+    <style>
+        html, body, #puck-root {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        /* Responsive font sizes for preview */
+        [data-puck-preview] {
+            font-size: 20px;
+            line-height: 1.6;
+        }
+        @media (max-width: 991.98px) {
+            [data-puck-preview] {
+                font-size: 18px;
+            }
+        }
+        @media (max-width: 767.98px) {
+            [data-puck-preview] {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="puck-root"></div>
+
+    {# Safe JSON embedding using json_script to prevent XSS via </script> injection #}
+    {{ initial_data|json_script:"puck-initial-data" }}
+    <script>
+        window.PUCK_CONFIG = {
+            pageId: {{ page.pk|default:'null' }},
+            initialData: JSON.parse(document.getElementById('puck-initial-data').textContent),
+            saveUrl: '{{ save_url }}',
+            csrfToken: '{{ csrf_token }}',
+            backUrl: '{{ back_url }}',
+            uploadUrl: '{% url "website_admin:upload_image" %}',
+        };
+    </script>
+    <script src="{% static 'website/puck/editor.js' %}" type="module"></script>
+</body>
+</html>

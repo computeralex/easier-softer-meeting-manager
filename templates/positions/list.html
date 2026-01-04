@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Service{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-person-badge me-2"></i>Service</h1>
+    <a href="{% url 'positions:create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> Add Position
+    </a>
+</div>
+
+{% if available_count > 0 or expiring_count > 0 %}
+<div class="row mb-4">
+    {% if available_count > 0 %}
+    <div class="col-md-6">
+        <div class="alert alert-warning mb-0">
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            <strong>{{ available_count }}</strong> position{{ available_count|pluralize }} need{{ available_count|pluralize:"s," }} a primary holder
+        </div>
+    </div>
+    {% endif %}
+    {% if expiring_count > 0 %}
+    <div class="col-md-6">
+        <div class="alert alert-info mb-0">
+            <i class="bi bi-clock me-1"></i>
+            <strong>{{ expiring_count }}</strong> term{{ expiring_count|pluralize }} ending soon
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Position</th>
+                    <th>Current Holder(s)</th>
+                    <th>Term Ends</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for position in positions %}
+                <tr>
+                    <td>
+                        <a href="{% url 'positions:detail' position.pk %}" class="text-decoration-none fw-medium">
+                            {{ position.display_name }}
+                        </a>
+                        {% if position.description %}
+                        <div class="small text-muted">{{ position.description|truncatechars:50 }}</div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% for assignment in position.primary_holders %}
+                            <span class="fw-medium">{{ assignment.user.get_short_name }}</span>{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            <span class="text-muted fst-italic">(no primary holder)</span>
+                        {% endfor %}
+                        {% if position.secondary_holders %}
+                            <div class="small text-muted mt-1">
+                                <i class="bi bi-person-dash"></i>
+                                Covered by:
+                                {% for assignment in position.secondary_holders %}
+                                    {{ assignment.user.get_short_name }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% for assignment in position.current_holders %}
+                            {% if assignment.is_term_overdue %}
+                                <span class="text-danger">
+                                    <i class="bi bi-exclamation-circle"></i> Overdue
+                                </span>
+                            {% elif assignment.is_term_ending_soon %}
+                                <span class="text-warning">
+                                    {{ assignment.expected_end_date|date:"M Y" }}
+                                </span>
+                            {% else %}
+                                {{ assignment.expected_end_date|date:"M Y" }}
+                            {% endif %}
+                            {% if not forloop.last %}<br>{% endif %}
+                        {% empty %}
+                            <span class="text-muted">—</span>
+                        {% endfor %}
+                    </td>
+                    <td class="text-center">
+                        {% if position.is_vacant %}
+                            <span class="badge bg-danger">
+                                <i class="bi bi-x-circle"></i> Vacant
+                            </span>
+                        {% elif position.is_available %}
+                            <span class="badge bg-warning text-dark">
+                                <i class="bi bi-exclamation-triangle"></i> Available
+                            </span>
+                        {% elif position.has_multiple_primary %}
+                            <span class="badge bg-info">
+                                <i class="bi bi-people"></i> Multiple
+                            </span>
+                        {% elif position.expiring_assignments %}
+                            <span class="badge bg-secondary">
+                                <i class="bi bi-clock"></i> Ending Soon
+                            </span>
+                        {% else %}
+                            <span class="badge bg-success">
+                                <i class="bi bi-check-circle"></i> Filled
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <div class="d-flex gap-1 justify-content-end">
+                            <a href="{% url 'positions:assign' position.pk %}" class="btn btn-sm btn-outline-primary" title="Assign">
+                                <i class="bi bi-person-plus"></i>
+                            </a>
+                            <a href="{% url 'positions:detail' position.pk %}" class="btn btn-sm btn-outline-secondary" title="View">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="{% url 'positions:update' position.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        No positions configured. <a href="{% url 'positions:create' %}">Create your first position</a>.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

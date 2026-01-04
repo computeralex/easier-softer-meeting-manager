@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+
+{% block title %}Readings{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-book me-2"></i>Readings</h1>
+    <div class="d-flex gap-2">
+        <a href="{% url 'readings:import' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-upload me-1"></i> Import
+        </a>
+        <a href="{% url 'readings:add' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i> Add Reading
+        </a>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body py-2">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            {% if config.public_enabled %}
+            <div class="d-flex align-items-center gap-2 flex-grow-1">
+                <i class="bi bi-share text-primary"></i>
+                <span class="text-muted small">Share link:</span>
+                <input type="text" class="form-control form-control-sm" id="shareUrl" value="{{ public_url }}" readonly style="max-width: 350px;">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="copyShareLink()" title="Copy link">
+                    <i class="bi bi-clipboard"></i>
+                </button>
+                <a href="{{ public_url }}" target="_blank" class="btn btn-outline-secondary btn-sm" title="View public page">
+                    <i class="bi bi-box-arrow-up-right"></i>
+                </a>
+            </div>
+            {% else %}
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-eye-slash text-muted"></i>
+                <span class="text-muted small">Public sharing disabled.</span>
+                <a href="{% url 'core:settings' %}?tab=readings" class="btn btn-outline-secondary btn-sm">Enable</a>
+            </div>
+            {% endif %}
+            <a href="{% url 'readings:reorder' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-arrows-move me-1"></i> Reorder
+            </a>
+            <a href="{% url 'readings:categories' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-tags me-1"></i> Categories
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Category Filter -->
+{% if categories %}
+<div class="mb-3">
+    <div class="btn-group" role="group">
+        <a href="{% url 'readings:list' %}" class="btn btn-sm {% if not selected_category %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            All
+        </a>
+        {% for cat in categories %}
+        <a href="{% url 'readings:list' %}?category={{ cat.slug }}" class="btn btn-sm {% if selected_category == cat.slug %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+            {{ cat.name }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th class="text-center">Visible</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for reading in readings %}
+                    <tr>
+                        <td>
+                            <i class="bi bi-file-text text-muted me-1"></i>
+                            {{ reading.title }}
+                        </td>
+                        <td>
+                            {% if reading.category %}
+                            <span class="badge category-badge" data-category="{{ reading.category.pk }}">{{ reading.category.name }}</span>
+                            {% else %}
+                            <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if reading.is_active %}
+                            <span class="badge bg-success">Yes</span>
+                            {% else %}
+                            <span class="badge bg-secondary">No</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex gap-1 justify-content-end">
+                                <a href="{% url 'readings:edit' reading.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'readings:delete' reading.pk %}" class="btn btn-sm btn-outline-danger" title="Delete">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">
+                            No readings yet. <a href="{% url 'readings:add' %}">Add your first reading</a> or <a href="{% url 'readings:import' %}">import from text</a>.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{% url 'core:settings' %}?tab=readings" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-gear me-1"></i> Settings
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyShareLink() {
+    const input = document.getElementById('shareUrl');
+    input.select();
+    navigator.clipboard.writeText(input.value).then(() => {
+        const btn = event.target.closest('button');
+        const icon = btn.querySelector('i');
+        icon.className = 'bi bi-check text-success';
+        setTimeout(() => icon.className = 'bi bi-clipboard', 1500);
+    });
+}
+
+// Category color palette
+const categoryColors = [
+    '#6f42c1', // purple
+    '#0d6efd', // blue
+    '#20c997', // teal
+    '#fd7e14', // orange
+    '#d63384', // pink
+    '#198754', // green
+    '#0dcaf0', // cyan
+    '#ffc107', // yellow
+];
+
+// Assign colors to category badges
+document.querySelectorAll('.category-badge').forEach(badge => {
+    const categoryId = parseInt(badge.dataset.category) || 0;
+    const colorIndex = categoryId % categoryColors.length;
+    badge.style.backgroundColor = categoryColors[colorIndex];
+    badge.style.color = 'white';
+});
+</script>
+{% endblock %}

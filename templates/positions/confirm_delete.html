@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Delete {{ object.display_name }}{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'positions:detail' object.pk %}" class="text-decoration-none text-muted">
+        <i class="bi bi-arrow-left me-1"></i> {{ object.display_name }}
+    </a>
+    <h1 class="mt-2"><i class="bi bi-trash me-2"></i>Delete Position</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">Confirm Deletion</h5>
+            </div>
+            <div class="card-body">
+                {% if has_history %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    <strong>Cannot delete.</strong> This position has assignment history.
+                    Consider deactivating it instead.
+                </div>
+                <a href="{% url 'positions:update' object.pk %}" class="btn btn-outline-secondary">
+                    Edit Position
+                </a>
+                {% else %}
+                <p>Are you sure you want to delete <strong>{{ object.display_name }}</strong>?</p>
+                <p class="text-muted">This action cannot be undone.</p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'positions:detail' object.pk %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-1"></i> Delete Position
+                        </button>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

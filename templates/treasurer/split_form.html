@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if editing %}Edit{% else %}Add{% endif %} Disbursement Split{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-pie-chart me-2"></i>{% if editing %}Edit{% else %}Add{% endif %} Disbursement Split</h1>
+    <a href="{% url 'core:settings' %}?tab=treasurer" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="id_name" class="form-label">Split Name</label>
+                        <input type="text" name="name" class="form-control" id="id_name"
+                               placeholder="e.g., Standard Split" value="{{ form.name.value|default:'' }}" required>
+                        {% if form.name.errors %}
+                        <div class="text-danger small">{{ form.name.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="is_default" class="form-check-input" id="id_is_default"
+                               {% if form.is_default.value %}checked{% endif %}>
+                        <label class="form-check-label" for="id_is_default">Set as default</label>
+                    </div>
+
+                    <hr>
+                    <h6>Split Recipients</h6>
+                    <p class="text-muted small">Add recipients and percentages. Must total 100%.</p>
+
+                    {{ formset.management_form }}
+
+                    <div id="recipient-container">
+                        {% for item_form in formset %}
+                        <div class="recipient-row mb-2" data-index="{{ forloop.counter0 }}">
+                            <div class="row g-2 align-items-center">
+                                <div class="col">
+                                    <input type="text" name="{{ item_form.name.html_name }}"
+                                           class="form-control form-control-sm"
+                                           placeholder="e.g., District, Area"
+                                           value="{{ item_form.name.value|default:'' }}">
+                                </div>
+                                <div class="col-3">
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" name="{{ item_form.percentage.html_name }}"
+                                               class="form-control form-control-sm"
+                                               placeholder="%" min="0" max="100" step="0.01"
+                                               value="{{ item_form.percentage.value|default:'' }}">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                </div>
+                                <div class="col-auto delete-col" style="width: 40px;">
+                                    {% if item_form.DELETE %}
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-btn"
+                                            onclick="deleteRow(this)" style="display: none;">
+                                        <i class="bi bi-x"></i>
+                                    </button>
+                                    <input type="checkbox" name="{{ item_form.DELETE.html_name }}"
+                                           class="delete-checkbox" style="display: none;">
+                                    {% endif %}
+                                </div>
+                                {{ item_form.id }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="addRecipient()">
+                        <i class="bi bi-plus me-1"></i> Add Recipient
+                    </button>
+
+                    {% if formset.non_form_errors %}
+                    <div class="alert alert-danger mt-3">{{ formset.non_form_errors }}</div>
+                    {% endif %}
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i> {% if editing %}Update{% else %}Save{% endif %} Split
+                        </button>
+                        <a href="{% url 'core:settings' %}?tab=treasurer" class="btn btn-outline-secondary ms-2">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Template for new rows
+const rowTemplate = `
+<div class="recipient-row mb-2" data-index="__INDEX__">
+    <div class="row g-2 align-items-center">
+        <div class="col">
+            <input type="text" name="disbursementsplititem_set-__INDEX__-name"
+                   class="form-control form-control-sm"
+                   placeholder="e.g., District, Area">
+        </div>
+        <div class="col-3">
+            <div class="input-group input-group-sm">
+                <input type="number" name="disbursementsplititem_set-__INDEX__-percentage"
+                       class="form-control form-control-sm"
+                       placeholder="%" min="0" max="100" step="0.01">
+                <span class="input-group-text">%</span>
+            </div>
+        </div>
+        <div class="col-auto delete-col" style="width: 40px;">
+            <button type="button" class="btn btn-sm btn-outline-danger delete-btn" onclick="deleteRow(this)">
+                <i class="bi bi-x"></i>
+            </button>
+            <input type="checkbox" name="disbursementsplititem_set-__INDEX__-DELETE"
+                   class="delete-checkbox" style="display: none;">
+        </div>
+        <input type="hidden" name="disbursementsplititem_set-__INDEX__-id" value="">
+    </div>
+</div>
+`;
+
+function updateDeleteButtons() {
+    const rows = document.querySelectorAll('.recipient-row:not([style*="display: none"])');
+    const visibleRows = Array.from(rows).filter(row => {
+        const checkbox = row.querySelector('.delete-checkbox');
+        return !checkbox || !checkbox.checked;
+    });
+
+    document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.style.display = visibleRows.length > 1 ? 'inline-block' : 'none';
+    });
+}
+
+function addRecipient() {
+    const container = document.getElementById('recipient-container');
+    const totalForms = document.querySelector('[name="disbursementsplititem_set-TOTAL_FORMS"]');
+    const currentIndex = parseInt(totalForms.value);
+
+    const newRow = rowTemplate.replace(/__INDEX__/g, currentIndex);
+    container.insertAdjacentHTML('beforeend', newRow);
+
+    totalForms.value = currentIndex + 1;
+    updateDeleteButtons();
+}
+
+function deleteRow(button) {
+    const row = button.closest('.recipient-row');
+    const checkbox = row.querySelector('.delete-checkbox');
+
+    if (checkbox) {
+        // If this is an existing row (has a checkbox), mark for deletion
+        checkbox.checked = true;
+        row.style.display = 'none';
+    } else {
+        // If this is a new row, just remove it
+        row.remove();
+    }
+
+    updateDeleteButtons();
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', updateDeleteButtons);
+</script>
+{% endblock %}

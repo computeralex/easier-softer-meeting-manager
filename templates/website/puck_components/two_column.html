@@ -1,0 +1,8 @@
+<div class="two-column-block row py-3" style="gap: {% if props.gap == 'none' %}0{% elif props.gap == 'small' %}1rem{% elif props.gap == 'large' %}3rem{% else %}2rem{% endif %};">
+    <div class="col" style="flex: 0 0 {{ props.leftWidth|default:50 }}%; min-height: 50px;">
+        {{ props.left_content }}
+    </div>
+    <div class="col" style="flex: 1; min-height: 50px;">
+        {{ props.right_content }}
+    </div>
+</div>

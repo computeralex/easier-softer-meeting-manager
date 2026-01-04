@@ -1,0 +1,5 @@
+<div class="spacer-block" style="height: {% if props.height == 'small' %}1rem{% elif props.height == 'large' %}3rem{% elif props.height == 'xlarge' %}5rem{% else %}2rem{% endif %}; {% if props.showDivider %}display: flex; align-items: center;{% endif %}">
+    {% if props.showDivider %}
+    <hr style="width: 100%; border: none; border-top: 1px solid #dee2e6; margin: 0;">
+    {% endif %}
+</div>

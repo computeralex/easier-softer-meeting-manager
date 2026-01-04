@@ -1,0 +1,10 @@
+{% load static %}
+<section class="hero-section py-5{% if props.backgroundImage %} has-background{% endif %}"
+         style="{% if props.backgroundImage %}background-image: url('{{ props.backgroundImage }}'); background-size: cover; background-position: center; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.3);{% else %}background-color: #f8f9fa;{% endif %} text-align: {{ props.alignment|default:'center' }}; min-height: {% if props.height == 'small' %}200px{% elif props.height == 'large' %}500px{% else %}350px{% endif %}; display: flex; flex-direction: column; justify-content: center; padding: 4rem 2rem;">
+    <div class="container">
+        <h1 class="display-4">{{ props.title }}</h1>
+        {% if props.subtitle %}
+        <p class="lead">{{ props.subtitle }}</p>
+        {% endif %}
+    </div>
+</section>

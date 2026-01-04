@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} Variation{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.quilljs.com/1.3.7/quill.snow.css" rel="stylesheet">
+<style>
+    #quill-editor {
+        min-height: 300px;
+        background: white;
+    }
+    .ql-toolbar {
+        border-top-left-radius: 0.375rem;
+        border-top-right-radius: 0.375rem;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: #f8f9fa;
+    }
+    #quill-editor {
+        border-bottom-left-radius: 0.375rem;
+        border-bottom-right-radius: 0.375rem;
+    }
+    /* Soft line breaks should NOT add extra spacing */
+    .ql-editor br {
+        display: inline;
+        margin: 0;
+        line-height: inherit;
+    }
+    /* Reading slug links */
+    .reading-slugs {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    .reading-slug-link {
+        cursor: pointer;
+        padding: 0.25rem 0.5rem;
+        background: #f8f9fa;
+        border-radius: 0.25rem;
+        transition: background 0.15s;
+    }
+    .reading-slug-link:hover {
+        background: #e9ecef;
+    }
+    .ql-editor {
+        line-height: 1.5;
+    }
+    .ql-editor p {
+        margin-bottom: 1.5em;
+    }
+    .ql-editor li {
+        line-height: 1.5;
+        margin-bottom: 0.5em;
+    }
+    .ql-editor ul, .ql-editor ol {
+        margin-bottom: 1.5em;
+    }
+    /* Editor font sizes */
+    .editor-font-small .ql-editor { font-size: 16px; }
+    .editor-font-medium .ql-editor { font-size: 20px; }
+    .editor-font-large .ql-editor { font-size: 24px; }
+    .editor-font-x-large .ql-editor { font-size: 28px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="bi bi-layers me-2"></i>
+        {% if object %}Edit Variation{% else %}Add Variation{% endif %}
+    </h1>
+    <a href="{% url 'meeting_format:block_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    Block: {{ block.title }}
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="post" id="variation-form">
+                    {% csrf_token %}
+
+                    <!-- Meeting Type Selection -->
+                    <div class="mb-3">
+                        <label for="id_meeting_type" class="form-label">Meeting Type</label>
+                        <select name="meeting_type" id="id_meeting_type" class="form-select">
+                            <option value="">Always shown (base content)</option>
+                            {% for mt in meeting_types %}
+                            <option value="{{ mt.pk }}" {% if form.instance.meeting_type_id == mt.pk %}selected{% endif %}>{{ mt.name }} only</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    {% if not meeting_types %}
+                    <div class="alert alert-info small mb-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        No meeting types defined yet.
+                        <a href="{% url 'meeting_format:meeting_type_create' %}">Create meeting types</a>
+                        to add type-specific content.
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Content</label>
+                        <div id="quill-editor" class="editor-font-{{ format_config.editor_font_size|default:'medium' }}">{{ form.instance.content|safe }}</div>
+                        <input type="hidden" name="content" id="id_content">
+                    </div>
+
+                    <div class="form-check mb-3">
+                        <input type="checkbox" name="is_active" id="id_is_active" class="form-check-input"
+                               {% if form.instance.is_active or not object %}checked{% endif %}>
+                        <label for="id_is_active" class="form-check-label">Active</label>
+                    </div>
+
+                    <div class="mt-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i> Save Variation
+                        </button>
+                        <a href="{% url 'meeting_format:block_list' %}" class="btn btn-outline-secondary ms-2">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="col-lg-4">
+        <div class="sticky-sidebar" style="position: sticky; top: 1rem;">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-info-circle me-1"></i> How It Works</h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">
+                    <strong>Always shown</strong> variations display at every meeting regardless of type.
+                </p>
+                <p class="small text-muted mb-2">
+                    <strong>Type-specific</strong> variations are shown IN ADDITION when that meeting type is selected.
+                </p>
+                <hr class="my-2">
+                <p class="small text-muted mb-2">
+                    <strong>Example:</strong> A "Closing" block might have:
+                </p>
+                <ul class="small text-muted mb-2">
+                    <li>"Closing Prayer" (always shown)</li>
+                    <li>"Thank the Speaker" (Speaker only)</li>
+                </ul>
+                <p class="small text-muted mb-0">
+                    Speaker meetings show both. Other meetings show just the prayer.
+                </p>
+            </div>
+        </div>
+
+        {% if available_slugs %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-book me-1"></i> Reading Links</h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">Click to insert at cursor:</p>
+                <div class="reading-slugs">
+                    {% for slug in available_slugs %}
+                    <code class="reading-slug-link" data-slug="{{ slug }}">[{{ slug }}]</code>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        </div><!-- end sticky-sidebar -->
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.quilljs.com/1.3.7/quill.min.js"></script>
+<script>
+    // Register a custom Break blot for soft line breaks
+    const Break = Quill.import('blots/break');
+    const Embed = Quill.import('blots/embed');
+
+    class SmartBreak extends Break {
+        length() {
+            return 1;
+        }
+        value() {
+            return '\n';
+        }
+        insertInto(parent, ref) {
+            Embed.prototype.insertInto.call(this, parent, ref);
+        }
+    }
+    SmartBreak.blotName = 'break';
+    SmartBreak.tagName = 'BR';
+    Quill.register(SmartBreak);
+
+    const quill = new Quill('#quill-editor', {
+        theme: 'snow',
+        modules: {
+            toolbar: [
+                ['bold', 'italic', 'underline'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['link'],
+                ['clean']
+            ],
+            keyboard: {
+                bindings: {
+                    // Shift+Enter creates a soft line break (<br>) instead of new paragraph
+                    linebreak: {
+                        key: 13, // Enter
+                        shiftKey: true,
+                        handler: function(range) {
+                            const currentLeaf = this.quill.getLeaf(range.index)[0];
+                            const nextLeaf = this.quill.getLeaf(range.index + 1)[0];
+
+                            this.quill.insertEmbed(range.index, 'break', true, 'user');
+
+                            if (nextLeaf === null || (currentLeaf.parent !== nextLeaf.parent)) {
+                                this.quill.insertEmbed(range.index + 1, 'break', true, 'user');
+                            }
+
+                            this.quill.setSelection(range.index + 1, Quill.sources.SILENT);
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Fix scroll jump when removing links - save and restore scroll position
+    quill.on('selection-change', function(range, oldRange, source) {
+        if (source === 'api') {
+            const scrollTop = window.scrollY;
+            requestAnimationFrame(() => {
+                window.scrollTo(0, scrollTop);
+            });
+        }
+    });
+
+    // On form submit, copy Quill content to hidden field
+    document.getElementById('variation-form').addEventListener('submit', function(e) {
+        document.getElementById('id_content').value = quill.root.innerHTML;
+    });
+
+    // Reading slug click to insert
+    document.querySelectorAll('.reading-slug-link').forEach(link => {
+        link.addEventListener('click', function() {
+            const slug = '[' + this.dataset.slug + ']';
+            const range = quill.getSelection(true);
+            if (range) {
+                quill.insertText(range.index, slug, 'user');
+                quill.setSelection(range.index + slug.length, 0);
+            } else {
+                // No selection, insert at end
+                const length = quill.getLength();
+                quill.insertText(length - 1, slug, 'user');
+            }
+            quill.focus();
+        });
+    });
+</script>
+{% endblock %}

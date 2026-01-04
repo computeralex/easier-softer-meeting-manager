@@ -1,0 +1,6 @@
+[phases.setup]
+nixPkgs = ["...", "file", "pango", "fontconfig", "freetype", "gdk-pixbuf", "libffi"]
+nixLibs = ["...", "file"]
+
+[variables]
+DJANGO_SETTINGS_MODULE = "config.settings.production"

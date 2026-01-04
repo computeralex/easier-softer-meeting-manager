@@ -1,0 +1,29 @@
+<div class="card h-100">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="bi bi-cash-coin me-1"></i>
+            Treasury
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="d-flex justify-content-between mb-2">
+            <span>Available:</span>
+            <strong class="{% if widget_data.summary.available_funds < 0 %}text-danger{% else %}text-success{% endif %}">
+                ${{ widget_data.summary.available_funds|floatformat:2 }}
+            </strong>
+        </div>
+        <div class="d-flex justify-content-between text-muted small">
+            <span>Balance:</span>
+            <span>${{ widget_data.summary.current_balance|floatformat:2 }}</span>
+        </div>
+        <div class="d-flex justify-content-between text-muted small">
+            <span>Reserve:</span>
+            <span>${{ widget_data.summary.prudent_reserve|floatformat:2 }}</span>
+        </div>
+    </div>
+    <div class="card-footer">
+        <a href="{% url 'treasurer:dashboard' %}" class="btn btn-sm btn-outline-primary w-100">
+            Open Treasury
+        </a>
+    </div>
+</div>

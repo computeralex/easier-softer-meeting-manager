@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if object %}Edit{% else %}Add{% endif %} Block{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        <i class="bi bi-card-text me-2"></i>
+        {% if object %}Edit Block{% else %}Add Block{% endif %}
+    </h1>
+    <a href="{% url 'meeting_format:block_list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                {% crispy form %}
+            </div>
+        </div>
+
+        {% if object %}
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">
+                    <i class="bi bi-layers me-1"></i> Variations
+                </h6>
+                <a href="{% url 'meeting_format:variation_create' block_pk=object.pk %}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus"></i> Add
+                </a>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for var in object.variations.all %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>
+                        {{ var.name }}
+                        {% if var.is_default %}<span class="badge bg-primary ms-1">Default</span>{% endif %}
+                        {% if not var.is_active %}<span class="badge bg-secondary ms-1">Inactive</span>{% endif %}
+                    </span>
+                    <div class="d-flex gap-1">
+                        <a href="{% url 'meeting_format:variation_update' var.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="{% url 'meeting_format:variation_delete' var.pk %}" class="btn btn-sm btn-outline-danger" title="Delete">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </div>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-muted">No variations yet. Add one to define this block's content.</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

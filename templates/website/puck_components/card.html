@@ -1,0 +1,10 @@
+<div class="card-block card my-3{% if props.variant == 'primary' %} border-primary{% elif props.variant == 'secondary' %} bg-light{% endif %}">
+    {% if props.title %}
+    <div class="card-header{% if props.variant == 'primary' %} bg-primary text-white{% endif %}">
+        <h5 class="mb-0">{{ props.title }}</h5>
+    </div>
+    {% endif %}
+    <div class="card-body">
+        {{ props.content|linebreaksbr }}
+    </div>
+</div>

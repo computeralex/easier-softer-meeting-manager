@@ -1,0 +1,23 @@
+<div class="card h-100">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="bi bi-telephone me-1"></i>
+            Phone List
+        </h6>
+    </div>
+    <div class="card-body">
+        <div class="d-flex justify-content-between mb-2">
+            <span>Total Contacts:</span>
+            <strong>{{ widget_data.contact_count }}</strong>
+        </div>
+        <div class="d-flex justify-content-between text-muted small">
+            <span>Active:</span>
+            <span>{{ widget_data.active_count|default:widget_data.contact_count }}</span>
+        </div>
+    </div>
+    <div class="card-footer">
+        <a href="{% url 'phone_list:list' %}" class="btn btn-sm btn-outline-primary w-100">
+            Open Phone List
+        </a>
+    </div>
+</div>

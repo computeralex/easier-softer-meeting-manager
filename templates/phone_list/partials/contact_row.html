@@ -1,0 +1,56 @@
+<tr id="contact-{{ contact.pk }}">
+    <td>{{ contact.name }}</td>
+    <td>
+        {{ contact.phone|default:"-" }}
+        {% if contact.has_whatsapp and contact.phone %}
+        <i class="bi bi-whatsapp text-success ms-1" title="WhatsApp"></i>
+        {% endif %}
+    </td>
+    <td>{{ contact.email|default:"-" }}</td>
+    <td>
+        {% if contact.sobriety_date %}
+        {{ contact.sobriety_date|date:"M j, Y" }}
+        {% else %}
+        <span class="text-muted">-</span>
+        {% endif %}
+    </td>
+    <td>
+        {% if contact.time_zone %}
+        {{ contact.time_zone.display_name }}
+        {% elif contact.time_zone_other %}
+        {{ contact.time_zone_other }}
+        {% else %}
+        <span class="text-muted">-</span>
+        {% endif %}
+    </td>
+    <td class="text-center">
+        {% if contact.available_to_sponsor %}
+        <span class="badge bg-success">Yes</span>
+        {% else %}
+        <span class="text-muted">-</span>
+        {% endif %}
+    </td>
+    <td class="text-center">
+        <form method="post" action="{% url 'phone_list:toggle' contact.pk %}"
+              hx-post="{% url 'phone_list:toggle' contact.pk %}"
+              hx-target="#contact-{{ contact.pk }}"
+              hx-swap="outerHTML"
+              class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm {% if contact.is_active %}btn-success{% else %}btn-outline-secondary{% endif %}"
+                    title="{% if contact.is_active %}Visible (click to hide){% else %}Hidden (click to show){% endif %}">
+                <i class="bi bi-{% if contact.is_active %}eye{% else %}eye-slash{% endif %}"></i>
+            </button>
+        </form>
+    </td>
+    <td class="text-end">
+        <div class="d-flex gap-1 justify-content-end">
+            <a href="{% url 'phone_list:edit' contact.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{% url 'phone_list:delete' contact.pk %}" class="btn btn-sm btn-outline-danger" title="Delete">
+                <i class="bi bi-trash"></i>
+            </a>
+        </div>
+    </td>
+</tr>

@@ -1,0 +1,17 @@
+{% if props.src %}
+<figure class="image-block py-3" style="display: flex; flex-direction: column; align-items: {% if props.alignment == 'left' %}flex-start{% elif props.alignment == 'right' %}flex-end{% else %}center{% endif %};">
+    <img src="{{ props.src }}"
+         alt="{{ props.alt }}"
+         style="max-width: 100%; height: auto; width: {% if props.width == 'small' %}25%{% elif props.width == 'medium' %}50%{% elif props.width == 'large' %}75%{% else %}100%{% endif %}; border-radius: 0.25rem;"
+         loading="lazy">
+    {% if props.caption %}
+    <figcaption class="text-muted mt-2" style="font-size: 0.875rem;">{{ props.caption }}</figcaption>
+    {% endif %}
+</figure>
+{% else %}
+<div class="image-block py-3" style="display: flex; justify-content: {% if props.alignment == 'left' %}flex-start{% elif props.alignment == 'right' %}flex-end{% else %}center{% endif %};">
+    <div style="width: {% if props.width == 'small' %}25%{% elif props.width == 'medium' %}50%{% elif props.width == 'large' %}75%{% else %}100%{% endif %}; min-width: 150px; height: 150px; background-color: #e9ecef; display: flex; align-items: center; justify-content: center; color: #6c757d; border-radius: 0.25rem;">
+        No image
+    </div>
+</div>
+{% endif %}

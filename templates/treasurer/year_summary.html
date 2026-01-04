@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}{{ year }} Summary{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-calendar-check me-2"></i>{{ year }} Year Summary</h1>
+    <a href="{% url 'treasurer:dashboard' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back
+    </a>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-4">
+                <h6 class="text-muted">Total Income</h6>
+                <h3 class="text-success">${{ summary.total_income|floatformat:2 }}</h3>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-muted">Total Expenses</h6>
+                <h3 class="text-danger">${{ summary.total_expenses|floatformat:2 }}</h3>
+            </div>
+            <div class="col-md-4">
+                <h6 class="text-muted">Net</h6>
+                <h3>${{ summary.net_amount|floatformat:2 }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if summary.expense_by_category %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Expenses by Category</h5>
+    </div>
+    <ul class="list-group list-group-flush">
+        {% for item in summary.expense_by_category %}
+        <li class="list-group-item d-flex justify-content-between">
+            <span>{{ item.category__name|default:"Uncategorized" }}</span>
+            <strong>${{ item.total|floatformat:2 }}</strong>
+        </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,84 @@
+<form method="post" action="{% url 'meeting_format:settings' %}">
+    {% csrf_token %}
+
+    <div class="mb-4">
+        <h6 class="text-muted mb-3">Public Access</h6>
+        <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" name="public_enabled" id="format_public_enabled"
+                   {% if section.context.format_config.public_enabled %}checked{% endif %}>
+            <label class="form-check-label" for="format_public_enabled">
+                Enable public meeting format page
+            </label>
+        </div>
+        <div class="form-text">When enabled, anyone with the link can view the meeting format.</div>
+    </div>
+
+    {% if section.context.format_config.public_enabled %}
+    <div class="mb-4">
+        <h6 class="text-muted mb-3">Share Link</h6>
+        <div class="input-group">
+            <input type="text" class="form-control" id="formatShareUrl"
+                   value="{{ request.scheme }}://{{ request.get_host }}/f/{{ section.context.format_config.share_token }}/" readonly>
+            <button type="button" class="btn btn-outline-secondary" onclick="copyFormatLink()">
+                <i class="bi bi-clipboard"></i>
+            </button>
+            <a href="/f/{{ section.context.format_config.share_token }}/" target="_blank" class="btn btn-outline-secondary">
+                <i class="bi bi-box-arrow-up-right"></i>
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="mb-4">
+        <h6 class="text-muted mb-3">Font Sizes</h6>
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label for="editor_font_size" class="form-label">Editor Font Size</label>
+                <select class="form-select" name="editor_font_size" id="editor_font_size">
+                    <option value="small" {% if section.context.format_config.editor_font_size == 'small' %}selected{% endif %}>Small</option>
+                    <option value="medium" {% if section.context.format_config.editor_font_size == 'medium' %}selected{% endif %}>Medium</option>
+                    <option value="large" {% if section.context.format_config.editor_font_size == 'large' %}selected{% endif %}>Large</option>
+                    <option value="x-large" {% if section.context.format_config.editor_font_size == 'x-large' %}selected{% endif %}>Extra Large</option>
+                </select>
+                <div class="form-text">Font size when editing content</div>
+            </div>
+            <div class="col-md-6">
+                <label for="display_font_size" class="form-label">Display Font Size</label>
+                <select class="form-select" name="display_font_size" id="display_font_size">
+                    <option value="small" {% if section.context.format_config.display_font_size == 'small' %}selected{% endif %}>Small</option>
+                    <option value="medium" {% if section.context.format_config.display_font_size == 'medium' %}selected{% endif %}>Medium</option>
+                    <option value="large" {% if section.context.format_config.display_font_size == 'large' %}selected{% endif %}>Large</option>
+                    <option value="x-large" {% if section.context.format_config.display_font_size == 'x-large' %}selected{% endif %}>Extra Large</option>
+                </select>
+                <div class="form-text">Font size on public pages</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <h6 class="text-muted mb-3">Format Statistics</h6>
+        <div class="d-flex gap-4">
+            <div>
+                <span class="text-muted">Blocks:</span>
+                <strong>{{ section.context.block_count }}</strong>
+            </div>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        <i class="bi bi-check-lg me-1"></i> Save Settings
+    </button>
+</form>
+
+<script>
+function copyFormatLink() {
+    const input = document.getElementById('formatShareUrl');
+    input.select();
+    navigator.clipboard.writeText(input.value).then(() => {
+        const btn = event.target.closest('button');
+        const icon = btn.querySelector('i');
+        icon.className = 'bi bi-check text-success';
+        setTimeout(() => icon.className = 'bi bi-clipboard', 1500);
+    });
+}
+</script>

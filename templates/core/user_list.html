@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Users{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-people me-2"></i>Users</h1>
+    <div class="d-flex gap-2">
+        <a href="{% url 'positions:list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-person-badge me-1"></i> Service Positions
+        </a>
+        <a href="{% url 'core:user_invite' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-envelope me-1"></i> Invite User
+        </a>
+        <a href="{% url 'core:user_add' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-1"></i> Add User
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Position</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.get_full_name|default:"-" }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        {% if user.primary_position %}
+                        <span class="badge bg-primary">{{ user.primary_position.display_name }}</span>
+                        {% endif %}
+                        {% for assignment in user.secondary_assignments %}
+                        <span class="badge bg-secondary" title="Secondary (covering)">{{ assignment.position.display_name }}</span>
+                        {% endfor %}
+                        {% if not user.primary_position and not user.secondary_assignments %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <form method="post" action="{% url 'core:user_toggle' user.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit"
+                                    class="btn btn-sm {% if user.is_active %}btn-success{% else %}btn-outline-secondary{% endif %}"
+                                    title="{% if user.is_active %}Active (click to deactivate){% else %}Inactive (click to activate){% endif %}"
+                                    {% if user == request.user %}disabled{% endif %}>
+                                {% if user.is_active %}
+                                <i class="bi bi-check-circle"></i> Active
+                                {% else %}
+                                <i class="bi bi-x-circle"></i> Inactive
+                                {% endif %}
+                            </button>
+                        </form>
+                    </td>
+                    <td class="text-end">
+                        <div class="d-flex gap-1 justify-content-end">
+                            <a href="{% url 'core:user_edit' user.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            {% if user != request.user %}
+                            <a href="{% url 'core:user_delete' user.pk %}" class="btn btn-sm btn-outline-danger" title="Delete">
+                                <i class="bi bi-trash"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        No users yet. <a href="{% url 'core:user_add' %}">Add your first user</a>.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
