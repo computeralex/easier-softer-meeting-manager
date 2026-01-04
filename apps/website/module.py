@@ -76,7 +76,7 @@ class WebsiteModule(BaseModule):
         from .models import WebsiteModuleConfig, WebsitePage
         from apps.treasurer.models import Meeting
 
-        meeting, _ = Meeting.objects.get_or_create(pk=1, defaults={'name': 'My Meeting'})
+        meeting, _ = Meeting.objects.get_or_create(pk=1, defaults={'name': 'Easier Softer Group'})
         config = WebsiteModuleConfig.get_instance()
         cms_pages = WebsitePage.objects.filter(meeting=meeting, is_published=True)
 

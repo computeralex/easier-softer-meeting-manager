@@ -68,7 +68,7 @@ class MeetingFormatModule(BaseModule):
         from .models import FormatModuleConfig, FormatBlock
         from apps.treasurer.models import Meeting
 
-        meeting, _ = Meeting.objects.get_or_create(pk=1, defaults={'name': 'My Meeting'})
+        meeting, _ = Meeting.objects.get_or_create(pk=1, defaults={'name': 'Easier Softer Group'})
         config, _ = FormatModuleConfig.objects.get_or_create(meeting=meeting)
         block_count = FormatBlock.objects.filter(meeting=meeting, is_active=True).count()
 

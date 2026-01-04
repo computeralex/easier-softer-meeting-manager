@@ -77,7 +77,7 @@ class WebsiteModuleConfig(models.Model):
         from apps.treasurer.models import Meeting
         meeting = Meeting.objects.first()
         if not meeting:
-            meeting = Meeting.objects.create(name='My Meeting')
+            meeting = Meeting.objects.create(name='Easier Softer Group')
         obj, _ = cls.objects.get_or_create(meeting=meeting)
         return obj
 

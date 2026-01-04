@@ -22,7 +22,7 @@ class MeetingMixin:
     def get_meeting(self):
         meeting, _ = Meeting.objects.get_or_create(
             pk=1,
-            defaults={'name': 'My Meeting'}
+            defaults={'name': 'Easier Softer Group'}
         )
         return meeting
 

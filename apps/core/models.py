@@ -341,7 +341,7 @@ class MeetingConfig(models.Model):
         ('names', 'Positions, vacancy, and officer first name + last initial'),
     ]
 
-    meeting_name = models.CharField(max_length=255, default='My Meeting')
+    meeting_name = models.CharField(max_length=255, default='Easier Softer Group')
     meeting_type = models.CharField(
         max_length=100,
         blank=True,

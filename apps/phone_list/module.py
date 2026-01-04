@@ -76,7 +76,7 @@ class PhoneListModule(BaseModule):
         from apps.treasurer.models import Meeting
         from apps.core.models import MeetingConfig
 
-        meeting, _ = Meeting.objects.get_or_create(pk=1, defaults={'name': 'My Meeting'})
+        meeting, _ = Meeting.objects.get_or_create(pk=1, defaults={'name': 'Easier Softer Group'})
         config, _ = PhoneListConfig.objects.get_or_create(meeting=meeting)
 
         time_zones = TimeZone.objects.filter(

@@ -77,7 +77,7 @@ class TreasurerModule(BaseModule):
         from .forms import TreasurerSettingsForm
         from .services import TreasurerService
 
-        meeting, _ = Meeting.objects.get_or_create(pk=1, defaults={'name': 'My Meeting'})
+        meeting, _ = Meeting.objects.get_or_create(pk=1, defaults={'name': 'Easier Softer Group'})
         service = TreasurerService(meeting)
         settings, _ = service.get_or_create_settings()
 
@@ -94,7 +94,7 @@ class TreasurerModule(BaseModule):
         from .forms import TreasurerSettingsForm
         from .services import TreasurerService
 
-        meeting, _ = Meeting.objects.get_or_create(pk=1, defaults={'name': 'My Meeting'})
+        meeting, _ = Meeting.objects.get_or_create(pk=1, defaults={'name': 'Easier Softer Group'})
         service = TreasurerService(meeting)
         settings, _ = service.get_or_create_settings()
 

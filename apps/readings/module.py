@@ -73,7 +73,7 @@ class ReadingsModule(BaseModule):
         from .models import ReadingsModuleConfig
         from apps.treasurer.models import Meeting
 
-        meeting, _ = Meeting.objects.get_or_create(pk=1, defaults={'name': 'My Meeting'})
+        meeting, _ = Meeting.objects.get_or_create(pk=1, defaults={'name': 'Easier Softer Group'})
         config, _ = ReadingsModuleConfig.objects.get_or_create(meeting=meeting)
 
         return {

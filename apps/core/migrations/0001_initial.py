@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
             name='MeetingConfig',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('meeting_name', models.CharField(default='My Meeting', max_length=255)),
+                ('meeting_name', models.CharField(default='Easier Softer Group', max_length=255)),
                 ('meeting_type', models.CharField(blank=True, help_text='e.g., Open, Closed, Speaker, Step Study', max_length=100)),
                 ('meeting_day', models.CharField(blank=True, max_length=20)),
                 ('meeting_time', models.TimeField(blank=True, null=True)),
