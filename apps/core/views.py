@@ -18,7 +18,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.urls import reverse_lazy, reverse
 from django.views import View
-from django.views.generic import TemplateView, FormView, ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import TemplateView, FormView, ListView, CreateView, UpdateView, DeleteView, RedirectView
 
 from .mixins import ServicePositionRequiredMixin
 from .models import MeetingConfig, User, ServicePosition, PositionAssignment
@@ -42,10 +42,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class LoginView(auth_views.LoginView):
-    """Custom login view."""
-    template_name = 'core/login.html'
-    redirect_authenticated_user = True
+class LoginView(RedirectView):
+    """Redirect to the main login page."""
+    pattern_name = 'website:login'
 
 
 class LogoutView(auth_views.LogoutView):
@@ -424,7 +423,7 @@ class UserInviteView(ServicePositionRequiredMixin, FormView):
 
         if send_email_flag:
             # Send welcome email
-            login_url = self.request.build_absolute_uri(reverse('core:login'))
+            login_url = self.request.build_absolute_uri(reverse('website:login'))
             subject = 'Welcome to Meeting Manager'
             message = f"""Hello{' ' + first_name if first_name else ''},
 
