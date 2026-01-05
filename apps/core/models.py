@@ -383,6 +383,12 @@ class MeetingConfig(models.Model):
         null=True,
         help_text='Upload a favicon image (recommended: 32x32 or 64x64 PNG/ICO)'
     )
+    logo = models.ImageField(
+        upload_to='logo/',
+        blank=True,
+        null=True,
+        help_text='Upload a logo for the website header (recommended: max 200px height)'
+    )
     setup_status = models.CharField(
         max_length=20,
         choices=SETUP_STATUS_CHOICES,

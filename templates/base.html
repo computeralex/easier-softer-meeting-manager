@@ -89,8 +89,12 @@
 <body>
     <!-- Sidebar -->
     <nav class="sidebar d-flex flex-column">
-        <a href="{% url 'website:home' %}" class="meeting-name text-decoration-none" target="_blank" title="View public site">
+        <a href="{% url 'website:home' %}" class="meeting-name text-decoration-none d-flex align-items-center" target="_blank" title="View public site">
+            {% if meeting_config.logo %}
+            <img src="{{ meeting_config.logo.url }}" alt="" style="max-height: 30px; margin-right: 8px;">
+            {% else %}
             <i class="bi bi-people-fill me-2"></i>
+            {% endif %}
             {{ meeting_config.meeting_name }}
         </a>
 
