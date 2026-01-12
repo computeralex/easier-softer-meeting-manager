@@ -9,8 +9,9 @@ from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
-    CreateView, DeleteView, DetailView, FormView, ListView, TemplateView, UpdateView
+    CreateView, DeleteView, DetailView, FormView, ListView, TemplateView, UpdateView, View
 )
+from django.http import HttpResponse
 
 from apps.core.mixins import ServicePositionRequiredMixin
 from apps.core.models import ServicePosition, PositionAssignment, User
@@ -41,27 +42,27 @@ class PositionListView(ServicePositionRequiredMixin, ListView):
 
         # Add holders and status for each position
         for position in context['positions']:
-            # All current holders
-            position.current_holders = position.get_current_holders()
-            # Primary holders (position is "filled" if it has at least one)
-            position.primary_holders = position.get_primary_holders()
-            # Secondary holders (covering but position still needs someone)
-            position.secondary_holders = position.get_secondary_holders()
+            # Use prefetched data - filter in Python, not via new ORM queries
+            # This ensures we see freshly created assignments correctly
+            all_assignments = list(position.assignments.all())
+            current = [a for a in all_assignments if a.end_date is None]
+            primary = [a for a in current if a.is_primary]
+            secondary = [a for a in current if not a.is_primary]
 
-            # Status flags
-            position.is_available = position.is_available()  # No primary holder
-            position.is_vacant = position.get_holder_count() == 0  # No holders at all
+            position.current_holders = current
+            position.primary_holders = primary
+            position.secondary_holders = secondary
+
+            # Status flags using the Python-filtered lists
+            position.is_available = len(primary) == 0  # No primary holder
+            position.is_vacant = len(current) == 0  # No holders at all
             position.has_multiple_primary = (
-                position.get_primary_holder_count() > 1 and
+                len(primary) > 1 and
                 position.warn_on_multiple_holders
             )
 
             # Check for expiring terms
-            expiring = []
-            for holder in position.current_holders:
-                if holder.is_term_ending_soon:
-                    expiring.append(holder)
-            position.expiring_assignments = expiring
+            position.expiring_assignments = [h for h in current if h.is_term_ending_soon]
 
         # Count stats
         context['total_positions'] = len(context['positions'])
@@ -293,6 +294,58 @@ class EndTermView(ServicePositionRequiredMixin, FormView):
             f"Term ended for {assignment.user} as {assignment.position.display_name}."
         )
         return redirect('positions:detail', pk=self.kwargs['pk'])
+
+
+class TogglePrimaryView(ServicePositionRequiredMixin, View):
+    """Toggle assignment primary status (HTMX)."""
+
+    def post(self, request, assignment_pk):
+        assignment = get_object_or_404(
+            PositionAssignment,
+            pk=assignment_pk,
+            end_date__isnull=True  # Only current assignments
+        )
+        user = assignment.user
+        position_name = assignment.position.display_name
+
+        if assignment.is_primary:
+            # Unstar - make secondary
+            assignment.is_primary = False
+            assignment.save(update_fields=['is_primary', 'updated_at'])
+            message = f'{position_name} is no longer your primary position'
+        else:
+            # Star - make primary, unstar any other primary for this user
+            PositionAssignment.objects.filter(
+                user=user,
+                is_primary=True,
+                end_date__isnull=True
+            ).update(is_primary=False)
+            assignment.is_primary = True
+            assignment.save(update_fields=['is_primary', 'updated_at'])
+            message = f'{position_name} is now your primary position'
+
+        # Return updated partial for HTMX or redirect
+        if request.headers.get('HX-Request'):
+            from django.template.loader import render_to_string
+            # Refresh all assignments for this user to update all stars
+            assignments = user.position_assignments.filter(
+                end_date__isnull=True
+            ).select_related('position').order_by('-is_primary', 'position__display_name')
+            html = render_to_string(
+                'positions/partials/user_positions_list.html',
+                {'assignments': assignments, 'user_obj': user},
+                request=request
+            )
+            response = HttpResponse(html)
+            response['HX-Trigger'] = f'{{"showToast": "{message}"}}'
+            return response
+
+        messages.success(request, message)
+        # Redirect back to referring page
+        referer = request.META.get('HTTP_REFERER')
+        if referer:
+            return redirect(referer)
+        return redirect('core:user_list')
 
 
 class PublicOfficersView(TemplateView):

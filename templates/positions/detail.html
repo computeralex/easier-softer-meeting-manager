@@ -64,8 +64,9 @@
                             {% for assignment in primary_assignments %}
                             <tr>
                                 <td>
+                                    <i class="bi bi-star-fill text-warning me-1" title="This is their primary role"></i>
                                     <strong>{{ assignment.user.get_full_name }}</strong>
-                                    <div class="small text-muted">{{ assignment.user.email }}</div>
+                                    <div class="small text-muted ps-4">{{ assignment.user.email }}</div>
                                 </td>
                                 <td>{{ assignment.start_date|date:"M d, Y" }}</td>
                                 <td>
@@ -135,8 +136,9 @@
                             {% for assignment in secondary_assignments %}
                             <tr>
                                 <td>
+                                    <i class="bi bi-star text-muted me-1" title="Covering (not their primary role)"></i>
                                     {{ assignment.user.get_full_name }}
-                                    <div class="small text-muted">{{ assignment.user.email }}</div>
+                                    <div class="small text-muted ps-4">{{ assignment.user.email }}</div>
                                 </td>
                                 <td>
                                     {% if assignment.user.primary_position %}

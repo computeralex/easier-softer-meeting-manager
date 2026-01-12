@@ -11,7 +11,9 @@ from django.conf import settings
 from django.db import models
 from django.contrib import messages
 from django.contrib.auth import views as auth_views, update_session_auth_hash
+from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.tokens import default_token_generator
 from django.core import management
 from django.core.mail import send_mail
 from django.http import HttpResponse
@@ -399,6 +401,29 @@ class UserListView(ServicePositionRequiredMixin, ListView):
         return User.objects.prefetch_related('positions').order_by('-is_active', 'email')
 
 
+def send_password_reset_email(user, request):
+    """
+    Send a password reset email to a user.
+    Returns True if email was sent successfully, False otherwise.
+    """
+    try:
+        # Use Django's PasswordResetForm to send the email
+        form = PasswordResetForm(data={'email': user.email})
+        if form.is_valid():
+            form.save(
+                request=request,
+                use_https=request.is_secure(),
+                token_generator=default_token_generator,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                email_template_name='core/password_reset_email.html',
+                subject_template_name='core/password_reset_subject.txt',
+            )
+            return True
+    except Exception:
+        pass
+    return False
+
+
 class UserCreateView(ServicePositionRequiredMixin, CreateView):
     """Create a new user."""
     model = User
@@ -423,17 +448,29 @@ class UserCreateView(ServicePositionRequiredMixin, CreateView):
         return str(self.success_url)
 
     def form_valid(self, form):
-        # Generate a random password for new users
-        password = secrets.token_urlsafe(12)
+        # Create user with unusable password (they'll set it via reset link)
         user = form.save(commit=False)
-        user.set_password(password)
+        user.set_unusable_password()
         user.save()
         form.save_m2m()  # Save positions
 
-        messages.success(
-            self.request,
-            f'User "{user.email}" created. Temporary password: {password}'
-        )
+        # Send password reset email so user can set their own password
+        if send_password_reset_email(user, self.request):
+            messages.success(
+                self.request,
+                f'User "{user.email}" created. A password reset email has been sent.'
+            )
+        else:
+            # Email failed - generate temp password as fallback
+            password = secrets.token_urlsafe(12)
+            user.set_password(password)
+            user.save()
+            messages.warning(
+                self.request,
+                f'User "{user.email}" created but email could not be sent. '
+                f'Temporary password: {password}'
+            )
+
         return redirect(self.get_success_url())
 
 
@@ -452,6 +489,10 @@ class UserUpdateView(ServicePositionRequiredMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = f'Edit User: {self.object.email}'
+        # Add current position assignments for star toggle UI
+        context['current_assignments'] = self.object.position_assignments.filter(
+            end_date__isnull=True
+        ).select_related('position').order_by('-is_primary', 'position__display_name')
         return context
 
     def form_valid(self, form):
@@ -495,6 +536,28 @@ class UserToggleView(ServicePositionRequiredMixin, View):
 
         status = 'activated' if user.is_active else 'deactivated'
         messages.success(request, f'User "{user.email}" {status}.')
+        return redirect('core:user_list')
+
+
+class SendPasswordResetEmailView(ServicePositionRequiredMixin, View):
+    """Send a password reset email to a user (admin action)."""
+
+    def post(self, request, pk):
+        user = get_object_or_404(User, pk=pk)
+
+        if not user.is_active:
+            messages.error(request, f'Cannot send reset email to inactive user "{user.email}".')
+            return redirect('core:user_list')
+
+        if send_password_reset_email(user, request):
+            messages.success(request, f'Password reset email sent to "{user.email}".')
+        else:
+            messages.error(request, f'Failed to send password reset email to "{user.email}".')
+
+        # Redirect back to referring page or user list
+        referer = request.META.get('HTTP_REFERER')
+        if referer:
+            return redirect(referer)
         return redirect('core:user_list')
 
 

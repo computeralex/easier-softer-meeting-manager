@@ -66,6 +66,14 @@
                             <a href="{% url 'core:user_edit' user.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
                                 <i class="bi bi-pencil"></i>
                             </a>
+                            {% if user.is_active and user != request.user %}
+                            <form method="post" action="{% url 'core:user_send_reset_email' user.pk %}" class="d-inline">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-outline-primary" title="Send password reset email">
+                                    <i class="bi bi-envelope-arrow-up"></i>
+                                </button>
+                            </form>
+                            {% endif %}
                             {% if user != request.user %}
                             <a href="{% url 'core:user_delete' user.pk %}" class="btn btn-sm btn-outline-danger" title="Delete">
                                 <i class="bi bi-trash"></i>

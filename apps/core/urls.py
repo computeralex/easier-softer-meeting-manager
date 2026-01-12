@@ -26,6 +26,7 @@ urlpatterns = [
     path('users/<int:pk>/edit/', views.UserUpdateView.as_view(), name='user_edit'),
     path('users/<int:pk>/delete/', views.UserDeleteView.as_view(), name='user_delete'),
     path('users/<int:pk>/toggle/', views.UserToggleView.as_view(), name='user_toggle'),
+    path('users/<int:pk>/send-reset-email/', views.SendPasswordResetEmailView.as_view(), name='user_send_reset_email'),
 
     # Password Management
     path('password/change/', views.PasswordChangeView.as_view(), name='password_change'),

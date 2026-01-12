@@ -1,6 +1,12 @@
 """
 Django development settings.
 """
+import os
+from dotenv import load_dotenv
+
+# Load .env file
+load_dotenv()
+
 from .base import *
 
 DEBUG = True
@@ -15,5 +21,6 @@ DATABASES = {
     }
 }
 
-# Email - console backend for development
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+# Email - use .env settings if configured, otherwise console backend
+if not os.environ.get('EMAIL_HOST_PASSWORD'):
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

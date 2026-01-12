@@ -46,7 +46,7 @@ class ContactListView(ServicePositionRequiredMixin, MeetingMixin, ListView):
     def get_queryset(self):
         return Contact.objects.filter(
             meeting=self.get_meeting()
-        ).select_related('time_zone')
+        ).select_related('time_zone').order_by('name')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -470,7 +470,7 @@ class PublicPhoneListView(TemplateView):
         context['contacts'] = Contact.objects.filter(
             meeting=config.meeting,
             is_active=True
-        ).select_related('time_zone')
+        ).select_related('time_zone').order_by('name')
         # Use the global meeting name from settings
         from apps.core.models import MeetingConfig
         meeting_config = MeetingConfig.get_instance()

@@ -17,6 +17,7 @@ dependencies = [
     "pillow>=12.0.0",
     "psycopg2-binary>=2.9.10",
     "python-dateutil>=2.9.0",
+    "python-dotenv>=1.2.1",
     "python-magic>=0.4.27",
     "weasyprint>=67.0",
     "whitenoise>=6.8.0",
