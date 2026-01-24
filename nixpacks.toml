@@ -4,3 +4,4 @@ nixLibs = ["...", "file"]
 
 [variables]
 DJANGO_SETTINGS_MODULE = "config.settings.production"
+DJANGO_ENV = "production"
