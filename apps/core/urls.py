@@ -34,4 +34,8 @@ urlpatterns = [
     path('password/reset/done/', views.PasswordResetDoneView.as_view(), name='password_reset_done'),
     path('password/reset/<uidb64>/<token>/', views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('password/reset/complete/', views.PasswordResetCompleteView.as_view(), name='password_reset_complete'),
+
+    # API endpoints (HTMX)
+    path('api/users/search/', views.UserSearchView.as_view(), name='user_search'),
+    path('api/users/quick-create/', views.QuickCreateUserView.as_view(), name='user_quick_create'),
 ]

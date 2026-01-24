@@ -722,3 +722,58 @@ class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):
 class PasswordResetCompleteView(auth_views.PasswordResetCompleteView):
     """Password reset complete."""
     template_name = 'core/password_reset_complete.html'
+
+
+# =============================================================================
+# User Search API (HTMX)
+# =============================================================================
+
+class UserSearchView(ServicePositionRequiredMixin, View):
+    """HTMX endpoint for searching users by name or email."""
+
+    def get(self, request):
+        query = request.GET.get('q', '').strip()
+        users = []
+
+        if len(query) >= 2:
+            users = User.objects.filter(is_active=True).filter(
+                models.Q(first_name__icontains=query) |
+                models.Q(last_name__icontains=query) |
+                models.Q(email__icontains=query)
+            ).order_by('first_name', 'last_name')[:10]
+
+        html = ''.join(
+            f'<button type="button" class="list-group-item list-group-item-action user-search-result" '
+            f'data-user-id="{u.pk}" data-user-name="{u.get_full_name() or u.email or "Unnamed"}">'
+            f'<strong>{u.get_full_name() or "Unnamed"}</strong>'
+            f'{f" <small class=text-muted>({u.email})</small>" if u.email else " <small class=text-muted>(no email)</small>"}'
+            f'</button>'
+            for u in users
+        )
+
+        if not html and query:
+            html = '<div class="list-group-item text-muted">No users found</div>'
+
+        return HttpResponse(html)
+
+
+class QuickCreateUserView(ServicePositionRequiredMixin, View):
+    """HTMX endpoint for quickly creating a placeholder user."""
+
+    def post(self, request):
+        first_name = request.POST.get('first_name', '').strip()
+        last_name = request.POST.get('last_name', '').strip()
+
+        if not first_name:
+            return HttpResponse(
+                '<div class="alert alert-danger">First name is required</div>',
+                status=400
+            )
+
+        user = User.objects.create_placeholder(first_name, last_name)
+
+        # Return the user info for the autocomplete to use
+        return HttpResponse(
+            f'<div data-user-id="{user.pk}" data-user-name="{user.get_full_name()}">'
+            f'Created: {user.get_full_name()}</div>'
+        )

@@ -30,24 +30,67 @@
                 <h5 class="mb-0">Assign to {{ position.display_name }}</h5>
             </div>
             <div class="card-body">
-                <form method="post">
+                <form method="post" id="assign-form">
                     {% csrf_token %}
-                    {{ form|crispy }}
+
+                    <!-- User Search Autocomplete -->
+                    <div class="mb-3">
+                        <label class="form-label">User <span class="text-danger">*</span></label>
+                        <input type="hidden" name="user" id="user-id" required>
+                        <div class="position-relative">
+                            <input type="text"
+                                   class="form-control"
+                                   id="user-search"
+                                   placeholder="Start typing a name or email..."
+                                   autocomplete="off"
+                                   hx-get="{% url 'core:user_search' %}"
+                                   hx-trigger="keyup changed delay:300ms"
+                                   hx-target="#user-results"
+                                   name="q">
+                            <div id="selected-user" class="mt-2 d-none">
+                                <span class="badge bg-primary fs-6 py-2 px-3">
+                                    <span id="selected-user-name"></span>
+                                    <button type="button" class="btn-close btn-close-white ms-2" onclick="clearSelectedUser()" style="font-size: 0.6rem;"></button>
+                                </span>
+                            </div>
+                            <div id="user-results" class="list-group position-absolute w-100 shadow-sm" style="z-index: 1000; max-height: 250px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Add User -->
+                    <div class="border rounded p-3 mb-3 bg-light">
+                        <p class="small text-muted mb-2">Can't find them? Add a placeholder:</p>
+                        <div class="row g-2">
+                            <div class="col">
+                                <input type="text" class="form-control form-control-sm" id="new-first-name" placeholder="First name">
+                            </div>
+                            <div class="col">
+                                <input type="text" class="form-control form-control-sm" id="new-last-name" placeholder="Last name">
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="quickCreateUser()">
+                                    <i class="bi bi-plus"></i> Add
+                                </button>
+                            </div>
+                        </div>
+                        <div id="quick-create-result" class="mt-2"></div>
+                    </div>
+
+                    <hr>
+
+                    <!-- Other form fields -->
+                    {{ form.is_primary|as_crispy_field }}
+                    {{ form.start_date|as_crispy_field }}
+                    {{ form.end_date|as_crispy_field }}
+                    {{ form.notes|as_crispy_field }}
 
                     <div class="d-flex justify-content-between mt-4">
                         <a href="{% url 'positions:detail' position.pk %}" class="btn btn-outline-secondary">Cancel</a>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="submit-btn" disabled>
                             <i class="bi bi-person-plus me-1"></i> Assign User
                         </button>
                     </div>
                 </form>
-
-                <div class="border-top pt-3 mt-4">
-                    <p class="text-muted small mb-2">Don't see the person you're looking for?</p>
-                    <a href="{% url 'core:user_add' %}?next={% url 'positions:assign' position.pk %}" class="btn btn-outline-secondary btn-sm">
-                        <i class="bi bi-person-plus-fill me-1"></i> Add New User
-                    </a>
-                </div>
             </div>
         </div>
     </div>
@@ -76,4 +119,80 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Handle clicking on search results
+document.addEventListener('click', function(e) {
+    if (e.target.closest('.user-search-result')) {
+        const btn = e.target.closest('.user-search-result');
+        selectUser(btn.dataset.userId, btn.dataset.userName);
+    }
+});
+
+function selectUser(userId, userName) {
+    document.getElementById('user-id').value = userId;
+    document.getElementById('selected-user-name').textContent = userName;
+    document.getElementById('selected-user').classList.remove('d-none');
+    document.getElementById('user-search').value = '';
+    document.getElementById('user-search').classList.add('d-none');
+    document.getElementById('user-results').innerHTML = '';
+    document.getElementById('submit-btn').disabled = false;
+}
+
+function clearSelectedUser() {
+    document.getElementById('user-id').value = '';
+    document.getElementById('selected-user').classList.add('d-none');
+    document.getElementById('user-search').classList.remove('d-none');
+    document.getElementById('user-search').focus();
+    document.getElementById('submit-btn').disabled = true;
+}
+
+function quickCreateUser() {
+    const firstName = document.getElementById('new-first-name').value.trim();
+    const lastName = document.getElementById('new-last-name').value.trim();
+    const resultDiv = document.getElementById('quick-create-result');
+
+    if (!firstName) {
+        resultDiv.innerHTML = '<div class="text-danger small">First name is required</div>';
+        return;
+    }
+
+    // Create placeholder user via HTMX/fetch
+    fetch('{% url "core:user_quick_create" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: `first_name=${encodeURIComponent(firstName)}&last_name=${encodeURIComponent(lastName)}`
+    })
+    .then(response => response.text())
+    .then(html => {
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
+        const data = temp.querySelector('[data-user-id]');
+        if (data) {
+            selectUser(data.dataset.userId, data.dataset.userName);
+            document.getElementById('new-first-name').value = '';
+            document.getElementById('new-last-name').value = '';
+            resultDiv.innerHTML = '<div class="text-success small">User created!</div>';
+            setTimeout(() => resultDiv.innerHTML = '', 2000);
+        } else {
+            resultDiv.innerHTML = html;
+        }
+    })
+    .catch(err => {
+        resultDiv.innerHTML = '<div class="text-danger small">Error creating user</div>';
+    });
+}
+
+// Close results when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('#user-search') && !e.target.closest('#user-results')) {
+        document.getElementById('user-results').innerHTML = '';
+    }
+});
+</script>
 {% endblock %}
