@@ -2,10 +2,12 @@
 Django development settings.
 """
 import os
-from dotenv import load_dotenv
 
-# Load .env file
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass  # dotenv not installed (production), skip .env loading
 
 from .base import *
 
