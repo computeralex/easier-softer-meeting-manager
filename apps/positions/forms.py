@@ -129,12 +129,13 @@ class PositionAssignmentForm(forms.ModelForm):
         user = cleaned_data.get('user')
         is_primary = cleaned_data.get('is_primary')
 
-        # If setting as primary, check if user already has another primary
+        # If setting as primary, check if user already has another primary (on active positions only)
         if user and is_primary:
             existing_primary = PositionAssignment.objects.filter(
                 user=user,
                 is_primary=True,
-                end_date__isnull=True
+                end_date__isnull=True,
+                position__is_active=True  # Ignore assignments to inactive positions
             ).exclude(pk=self.instance.pk if self.instance else None)
 
             if existing_primary.exists():
