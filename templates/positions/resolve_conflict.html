@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Resolve Assignment Conflict{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'positions:assign' position.pk %}" class="text-decoration-none text-muted">
+        <i class="bi bi-arrow-left me-1"></i> Back to Assign
+    </a>
+    <h1 class="mt-2"><i class="bi bi-exclamation-triangle text-warning me-2"></i>Primary Position Conflict</h1>
+</div>
+
+{% if not user %}
+<div class="alert alert-danger">
+    No pending assignment found. <a href="{% url 'positions:assign' position.pk %}">Start over</a>.
+</div>
+{% else %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <p class="lead">
+                    <strong>{{ user.get_full_name }}</strong> is already the primary holder of
+                    <strong>{{ existing.position.display_name }}</strong>.
+                </p>
+                <p class="text-muted">
+                    You're trying to make them primary for <strong>{{ position.display_name }}</strong>.
+                    What would you like to do?
+                </p>
+
+                <hr>
+
+                <div class="d-grid gap-3">
+                    <!-- Option 1: Make existing secondary -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="make_secondary">
+                        <button type="submit" class="btn btn-primary btn-lg w-100 text-start">
+                            <i class="bi bi-arrow-down-circle me-2"></i>
+                            <span>
+                                <strong>Make {{ existing.position.display_name }} secondary</strong>
+                                <br>
+                                <small class="text-light">{{ user.get_full_name }} becomes primary for {{ position.display_name }}, and {{ existing.position.display_name }} becomes a secondary responsibility.</small>
+                            </span>
+                        </button>
+                    </form>
+
+                    <!-- Option 2: Remove from existing -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="remove_existing">
+                        <button type="submit" class="btn btn-outline-danger btn-lg w-100 text-start">
+                            <i class="bi bi-x-circle me-2"></i>
+                            <span>
+                                <strong>Remove from {{ existing.position.display_name }}</strong>
+                                <br>
+                                <small>End their term at {{ existing.position.display_name }} and make them primary for {{ position.display_name }}.</small>
+                            </span>
+                        </button>
+                    </form>
+
+                    <!-- Option 3: Cancel -->
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="cancel">
+                        <button type="submit" class="btn btn-outline-secondary btn-lg w-100 text-start">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            <span>
+                                <strong>Cancel</strong>
+                                <br>
+                                <small>Go back and don't make any changes.</small>
+                            </span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -126,26 +126,22 @@ class PositionAssignmentForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        user = cleaned_data.get('user')
-        is_primary = cleaned_data.get('is_primary')
+        return cleaned_data
 
-        # If setting as primary, check if user already has another primary (on active positions only)
+    def get_existing_primary(self):
+        """Check if user already has a primary position on an active position."""
+        user = self.cleaned_data.get('user')
+        is_primary = self.cleaned_data.get('is_primary')
+
         if user and is_primary:
-            existing_primary = PositionAssignment.objects.filter(
+            existing = PositionAssignment.objects.filter(
                 user=user,
                 is_primary=True,
                 end_date__isnull=True,
-                position__is_active=True  # Ignore assignments to inactive positions
-            ).exclude(pk=self.instance.pk if self.instance else None)
-
-            if existing_primary.exists():
-                existing = existing_primary.first()
-                raise forms.ValidationError(
-                    f'{user} already has a primary position ({existing.position.display_name}). '
-                    f'Either make this a secondary position, or change their other position first.'
-                )
-
-        return cleaned_data
+                position__is_active=True
+            ).exclude(pk=self.instance.pk if self.instance else None).first()
+            return existing
+        return None
 
     def save(self, commit=True):
         instance = super().save(commit=False)

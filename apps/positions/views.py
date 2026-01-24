@@ -254,6 +254,21 @@ class AssignmentCreateView(ServicePositionRequiredMixin, CreateView):
 
     def form_valid(self, form):
         position = self.get_position()
+        existing_primary = form.get_existing_primary()
+
+        # Check if user already has a primary position
+        if existing_primary:
+            # Store form data in session and show conflict resolution
+            self.request.session['pending_assignment'] = {
+                'user_id': form.cleaned_data['user'].pk,
+                'is_primary': form.cleaned_data['is_primary'],
+                'start_date': str(form.cleaned_data['start_date']),
+                'notes': form.cleaned_data.get('notes', ''),
+                'position_id': position.pk,
+                'existing_assignment_id': existing_primary.pk,
+            }
+            return redirect('positions:resolve_conflict', pk=position.pk)
+
         form.instance.position = position
         messages.success(
             self.request,
@@ -263,6 +278,79 @@ class AssignmentCreateView(ServicePositionRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse('positions:detail', kwargs={'pk': self.kwargs['pk']})
+
+
+class ResolveConflictView(ServicePositionRequiredMixin, TemplateView):
+    """Resolve primary position conflict."""
+    template_name = 'positions/resolve_conflict.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        pending = self.request.session.get('pending_assignment')
+
+        if not pending:
+            return context
+
+        context['position'] = get_object_or_404(ServicePosition, pk=pending['position_id'])
+        context['user'] = get_object_or_404(User, pk=pending['user_id'])
+        context['existing'] = get_object_or_404(PositionAssignment, pk=pending['existing_assignment_id'])
+        return context
+
+    def post(self, request, pk):
+        pending = request.session.get('pending_assignment')
+        if not pending:
+            messages.error(request, 'No pending assignment found.')
+            return redirect('positions:assign', pk=pk)
+
+        action = request.POST.get('action')
+        position = get_object_or_404(ServicePosition, pk=pending['position_id'])
+        user = get_object_or_404(User, pk=pending['user_id'])
+        existing = get_object_or_404(PositionAssignment, pk=pending['existing_assignment_id'])
+
+        if action == 'make_secondary':
+            # Make existing assignment secondary, create new as primary
+            existing.is_primary = False
+            existing.save(update_fields=['is_primary', 'updated_at'])
+            PositionAssignment.objects.create(
+                user=user,
+                position=position,
+                is_primary=True,
+                start_date=pending['start_date'],
+                notes=pending.get('notes', ''),
+            )
+            messages.success(
+                request,
+                f'{user} is now primary for {position.display_name}. '
+                f'{existing.position.display_name} changed to secondary.'
+            )
+
+        elif action == 'remove_existing':
+            # End existing assignment, create new as primary
+            existing.end_date = date.today()
+            existing.save(update_fields=['end_date', 'updated_at'])
+            PositionAssignment.objects.create(
+                user=user,
+                position=position,
+                is_primary=True,
+                start_date=pending['start_date'],
+                notes=pending.get('notes', ''),
+            )
+            messages.success(
+                request,
+                f'{user} is now primary for {position.display_name}. '
+                f'Removed from {existing.position.display_name}.'
+            )
+
+        elif action == 'cancel':
+            messages.info(request, 'Assignment cancelled.')
+            del request.session['pending_assignment']
+            return redirect('positions:assign', pk=pk)
+
+        # Clean up session
+        if 'pending_assignment' in request.session:
+            del request.session['pending_assignment']
+
+        return redirect('positions:detail', pk=pk)
 
 
 class EndTermView(ServicePositionRequiredMixin, FormView):
