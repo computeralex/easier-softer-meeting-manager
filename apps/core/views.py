@@ -736,11 +736,18 @@ class UserSearchView(ServicePositionRequiredMixin, View):
         users = []
 
         if len(query) >= 2:
-            users = User.objects.filter(is_active=True).filter(
-                models.Q(first_name__icontains=query) |
-                models.Q(last_name__icontains=query) |
-                models.Q(email__icontains=query)
-            ).order_by('first_name', 'last_name')[:10]
+            # Split query into words and require all to match somewhere
+            words = query.split()
+            qs = User.objects.filter(is_active=True)
+
+            for word in words:
+                qs = qs.filter(
+                    models.Q(first_name__icontains=word) |
+                    models.Q(last_name__icontains=word) |
+                    models.Q(email__icontains=word)
+                )
+
+            users = qs.order_by('first_name', 'last_name')[:10]
 
         html = ''.join(
             f'<button type="button" class="list-group-item list-group-item-action user-search-result" '
