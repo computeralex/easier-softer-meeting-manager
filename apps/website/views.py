@@ -527,9 +527,10 @@ class PublicServiceView(PublicMixin, TemplateView):
 
         from apps.core.models import ServicePosition
 
-        # Get all active positions (alphabetically)
+        # Get all active positions (alphabetically), excluding membership positions
         positions = ServicePosition.objects.filter(
-            is_active=True
+            is_active=True,
+            is_membership_position=False
         ).order_by('display_name')
 
         # Add holder info to each position for the template

@@ -39,7 +39,7 @@ class PositionsModule(BaseModule):
         """Return widgets for the main dashboard."""
         from apps.core.models import ServicePosition, PositionAssignment
 
-        positions = ServicePosition.objects.filter(is_active=True)
+        positions = ServicePosition.objects.filter(is_active=True, is_membership_position=False)
         # Available = no primary holder (still needs someone dedicated)
         available_count = sum(1 for p in positions if p.is_available())
         # Vacant = no holders at all
@@ -82,7 +82,7 @@ class PositionsModule(BaseModule):
 
         config = MeetingConfig.get_instance()
         return {
-            'positions': ServicePosition.objects.filter(is_active=True).order_by('display_name'),
+            'positions': ServicePosition.objects.filter(is_active=True, is_membership_position=False).order_by('display_name'),
             'meeting_config': config,
             'display_choices': MeetingConfig.PUBLIC_OFFICERS_DISPLAY_CHOICES,
         }
