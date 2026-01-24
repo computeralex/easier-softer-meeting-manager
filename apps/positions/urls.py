@@ -19,5 +19,6 @@ urlpatterns = [
     # Assignment management
     path('<int:pk>/assign/', views.AssignmentCreateView.as_view(), name='assign'),
     path('<int:pk>/end/<int:assignment_pk>/', views.EndTermView.as_view(), name='end_term'),
+    path('<int:pk>/reactivate/<int:assignment_pk>/', views.ReactivateAssignmentView.as_view(), name='reactivate'),
     path('toggle-primary/<int:assignment_pk>/', views.TogglePrimaryView.as_view(), name='toggle_primary'),
 ]

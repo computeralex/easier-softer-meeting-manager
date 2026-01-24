@@ -66,7 +66,9 @@
                                 <td>
                                     <i class="bi bi-star-fill text-warning me-1" title="This is their primary role"></i>
                                     <strong>{{ assignment.user.get_full_name }}</strong>
-                                    <div class="small text-muted ps-4">{{ assignment.user.email }}</div>
+                                    <div class="small text-muted ps-4">
+                                        {% if assignment.user.email %}{{ assignment.user.email }}{% else %}<em>placeholder</em>{% endif %}
+                                    </div>
                                 </td>
                                 <td>{{ assignment.start_date|date:"M d, Y" }}</td>
                                 <td>
@@ -138,7 +140,9 @@
                                 <td>
                                     <i class="bi bi-star text-muted me-1" title="Covering (not their primary role)"></i>
                                     {{ assignment.user.get_full_name }}
-                                    <div class="small text-muted ps-4">{{ assignment.user.email }}</div>
+                                    <div class="small text-muted ps-4">
+                                        {% if assignment.user.email %}{{ assignment.user.email }}{% else %}<em>placeholder</em>{% endif %}
+                                    </div>
                                 </td>
                                 <td>
                                     {% if assignment.user.primary_position %}
@@ -177,6 +181,7 @@
                                 <th>Name</th>
                                 <th>Term</th>
                                 <th>Notes</th>
+                                <th class="text-end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -187,6 +192,14 @@
                                     {{ assignment.start_date|date:"M Y" }} — {{ assignment.end_date|date:"M Y" }}
                                 </td>
                                 <td class="text-muted small">{{ assignment.notes|default:"-"|truncatechars:50 }}</td>
+                                <td class="text-end">
+                                    <form method="post" action="{% url 'positions:reactivate' position.pk assignment.pk %}" class="d-inline">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Make current again">
+                                            <i class="bi bi-arrow-counterclockwise"></i> Reactivate
+                                        </button>
+                                    </form>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>

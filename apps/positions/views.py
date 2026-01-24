@@ -299,6 +299,26 @@ class EndTermView(ServicePositionRequiredMixin, FormView):
         return redirect('positions:detail', pk=self.kwargs['pk'])
 
 
+class ReactivateAssignmentView(ServicePositionRequiredMixin, View):
+    """Reactivate a historical assignment (clear end_date)."""
+
+    def post(self, request, pk, assignment_pk):
+        assignment = get_object_or_404(
+            PositionAssignment,
+            pk=assignment_pk,
+            position_id=pk,
+            end_date__isnull=False  # Only historical assignments
+        )
+        assignment.end_date = None
+        assignment.save(update_fields=['end_date', 'updated_at'])
+
+        messages.success(
+            request,
+            f"Reactivated {assignment.user} as {assignment.position.display_name}."
+        )
+        return redirect('positions:detail', pk=pk)
+
+
 class TogglePrimaryView(ServicePositionRequiredMixin, View):
     """Toggle assignment primary status (HTMX)."""
 

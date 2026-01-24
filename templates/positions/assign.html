@@ -33,6 +33,19 @@
                 <form method="post" id="assign-form">
                     {% csrf_token %}
 
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <strong>Please fix the errors below:</strong>
+                        <ul class="mb-0">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                            <li>{{ field }}: {{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
                     <!-- User Search Autocomplete -->
                     <div class="mb-3">
                         <label class="form-label">User <span class="text-danger">*</span></label>
@@ -81,7 +94,6 @@
                     <!-- Other form fields -->
                     {{ form.is_primary|as_crispy_field }}
                     {{ form.start_date|as_crispy_field }}
-                    {{ form.end_date|as_crispy_field }}
                     {{ form.notes|as_crispy_field }}
 
                     <div class="d-flex justify-content-between mt-4">

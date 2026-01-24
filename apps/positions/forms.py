@@ -98,11 +98,10 @@ class PositionAssignmentForm(forms.ModelForm):
 
     class Meta:
         model = PositionAssignment
-        fields = ['user', 'is_primary', 'start_date', 'end_date', 'notes']
+        fields = ['user', 'is_primary', 'start_date', 'notes']
         widgets = {
             'user': forms.Select(attrs={'class': 'form-select'}),
             'start_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
         }
         labels = {
