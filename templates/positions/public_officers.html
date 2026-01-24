@@ -26,25 +26,22 @@
                         aria-expanded="false"
                         aria-controls="position-{{ position.pk }}">
                     <span class="me-auto">{{ position.display_name }}</span>
-                    {% if position.is_filled %}
-                        <span class="badge bg-success ms-2">Filled</span>
-                        {% with assignment=position.primary_holders_list.0 %}
-                            {% if show_holder_names and assignment %}
-                                <span class="text-muted ms-2 small">
-                                    {{ assignment.user.get_short_name }}
-                                </span>
-                            {% endif %}
-                            {% if assignment.is_term_overdue %}
-                                <span class="badge bg-danger ms-2">Term ended {{ assignment.expected_end_date|date:"M Y" }}</span>
-                            {% elif assignment.is_term_ending_soon %}
-                                <span class="badge bg-warning text-dark ms-2">Term ends {{ assignment.expected_end_date|date:"M Y" }}</span>
-                            {% else %}
-                                <span class="text-muted ms-2 small">until {{ assignment.expected_end_date|date:"M Y" }}</span>
-                            {% endif %}
-                        {% endwith %}
-                    {% else %}
-                        <span class="badge bg-warning text-dark ms-2">Available</span>
-                    {% endif %}
+                    <span class="d-flex align-items-center" style="min-width: 200px; justify-content: flex-end;">
+                        {% if position.is_filled %}
+                            {% with assignment=position.primary_holders_list.0 %}
+                                {% if assignment.is_term_overdue %}
+                                    <span class="badge bg-danger">Term ended {{ assignment.expected_end_date|date:"M Y" }}</span>
+                                {% elif assignment.is_term_ending_soon %}
+                                    <span class="badge bg-warning text-dark">Term ends {{ assignment.expected_end_date|date:"M Y" }}</span>
+                                {% else %}
+                                    <span class="badge bg-success">Filled</span>
+                                    <span class="text-muted ms-2 small">until {{ assignment.expected_end_date|date:"M Y" }}</span>
+                                {% endif %}
+                            {% endwith %}
+                        {% else %}
+                            <span class="badge bg-warning text-dark">Available</span>
+                        {% endif %}
+                    </span>
                 </button>
             </h2>
             <div id="position-{{ position.pk }}" class="accordion-collapse collapse"
