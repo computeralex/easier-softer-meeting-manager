@@ -113,7 +113,7 @@ class UserForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['email'].label = 'Email Address'
         self.fields['email'].required = False
-        self.fields['email'].help_text = 'Leave blank for placeholder users (cannot log in)'
+        self.fields['email'].help_text = 'No login if blank'
         self.fields['first_name'].label = 'First Name'
         self.fields['first_name'].required = True  # Required for placeholders
         self.fields['last_name'].label = 'Last Name'
@@ -231,7 +231,7 @@ class UserInviteForm(forms.Form):
     email = forms.EmailField(
         label='Email Address',
         required=False,
-        help_text='Leave blank to create a placeholder user (cannot log in)'
+        help_text='No login if blank'
     )
     first_name = forms.CharField(max_length=100, required=False, label='First Name')
     last_name = forms.CharField(max_length=100, required=False, label='Last Name')

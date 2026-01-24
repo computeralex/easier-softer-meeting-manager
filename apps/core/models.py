@@ -189,7 +189,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         unique=True,
         null=True,
         blank=True,
-        help_text='Required for login. Leave blank for placeholder users.'
+        help_text='No login if blank'
     )
     first_name = models.CharField(max_length=100, blank=True)
     last_name = models.CharField(max_length=100, blank=True)
