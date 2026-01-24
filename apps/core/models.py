@@ -148,16 +148,33 @@ class ServicePosition(models.Model):
 class UserManager(BaseUserManager):
     """Custom user manager for email-based authentication."""
 
-    def create_user(self, email, password=None, **extra_fields):
-        if not email:
-            raise ValueError('Email is required')
-        email = self.normalize_email(email)
+    def create_user(self, email=None, password=None, **extra_fields):
+        # Email is optional - users without email are placeholders
+        if email:
+            email = self.normalize_email(email)
+        else:
+            email = None  # Ensure it's None, not empty string
         user = self.model(email=email, **extra_fields)
-        user.set_password(password)
+        if password:
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
         user.save(using=self._db)
         return user
 
+    def create_placeholder(self, first_name, last_name='', **extra_fields):
+        """Create a placeholder user (no email, can't log in)."""
+        return self.create_user(
+            email=None,
+            password=None,
+            first_name=first_name,
+            last_name=last_name,
+            **extra_fields
+        )
+
     def create_superuser(self, email, password=None, **extra_fields):
+        if not email:
+            raise ValueError('Superusers must have an email address')
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(email, password, **extra_fields)
@@ -166,8 +183,14 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     """
     Custom user model with email authentication and multiple service positions.
+    Users without email are "placeholders" - they can hold positions but can't log in.
     """
-    email = models.EmailField(unique=True)
+    email = models.EmailField(
+        unique=True,
+        null=True,
+        blank=True,
+        help_text='Required for login. Leave blank for placeholder users.'
+    )
     first_name = models.CharField(max_length=100, blank=True)
     last_name = models.CharField(max_length=100, blank=True)
     phone = models.CharField(max_length=30, blank=True)
@@ -195,7 +218,17 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name_plural = 'users'
 
     def __str__(self):
-        return self.get_full_name() or self.email
+        return self.get_full_name() or self.email or 'Unnamed User'
+
+    @property
+    def is_placeholder(self):
+        """Placeholder users have no email and can't log in."""
+        return not self.email
+
+    @property
+    def can_login(self):
+        """Users need an email to log in."""
+        return bool(self.email) and self.is_active
 
     def get_full_name(self):
         """Return the user's full name."""

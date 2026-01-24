@@ -587,16 +587,21 @@ class UserInviteView(ServicePositionRequiredMixin, FormView):
         secondary_positions = form.cleaned_data.get('secondary_positions', [])
         send_email_flag = form.cleaned_data.get('send_email', True)
 
-        # Generate random password
-        password = secrets.token_urlsafe(12)
-
-        # Create user
-        user = User.objects.create_user(
-            email=email,
-            password=password,
-            first_name=first_name,
-            last_name=last_name,
-        )
+        # Create user (placeholder if no email)
+        if email:
+            password = secrets.token_urlsafe(12)
+            user = User.objects.create_user(
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+            )
+        else:
+            # Placeholder user - no email, can't log in
+            user = User.objects.create_placeholder(
+                first_name=first_name,
+                last_name=last_name,
+            )
 
         # Create primary position assignment
         if primary_position:
@@ -626,7 +631,12 @@ class UserInviteView(ServicePositionRequiredMixin, FormView):
                 defaults={'is_primary': False}
             )
 
-        if send_email_flag:
+        # Handle messaging based on user type
+        if not email:
+            # Placeholder user created
+            display_name = user.get_full_name() or 'Placeholder user'
+            messages.success(self.request, f'Placeholder "{display_name}" created.')
+        elif send_email_flag:
             # Send welcome email
             login_url = self.request.build_absolute_uri(reverse('website:login'))
             subject = 'Welcome to Meeting Manager'

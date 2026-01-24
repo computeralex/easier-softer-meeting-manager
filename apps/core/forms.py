@@ -112,7 +112,10 @@ class UserForm(forms.ModelForm):
         self.request_user = kwargs.pop('request_user', None)
         super().__init__(*args, **kwargs)
         self.fields['email'].label = 'Email Address'
+        self.fields['email'].required = False
+        self.fields['email'].help_text = 'Leave blank for placeholder users (cannot log in)'
         self.fields['first_name'].label = 'First Name'
+        self.fields['first_name'].required = True  # Required for placeholders
         self.fields['last_name'].label = 'Last Name'
         self.fields['phone'].label = 'Phone Number'
         self.fields['is_active'].label = 'Account Active'
@@ -127,18 +130,20 @@ class UserForm(forms.ModelForm):
         # Get Group Member as default
         group_member = ServicePosition.objects.filter(name='group_member').first()
 
-        # Set primary position queryset and default
+        # Set primary position queryset - exclude membership positions
         self.fields['primary_position'].queryset = ServicePosition.objects.filter(
-            is_active=True
+            is_active=True,
+            is_membership_position=False
         ).order_by('display_name')
 
         if not self.instance.pk and group_member:
             self.fields['primary_position'].initial = group_member
 
-        # Secondary positions: exclude Group Member (doesn't make sense as secondary)
+        # Secondary positions: exclude membership positions
         self.fields['secondary_positions'].queryset = ServicePosition.objects.filter(
-            is_active=True
-        ).exclude(name='group_member').order_by('display_name')
+            is_active=True,
+            is_membership_position=False
+        ).order_by('display_name')
 
         # Pre-populate from existing assignments if editing
         if self.instance.pk:
@@ -169,6 +174,31 @@ class UserForm(forms.ModelForm):
             Submit('submit', 'Save', css_class='btn-primary mt-3')
         )
 
+    def clean_email(self):
+        """Convert empty email to None for database uniqueness."""
+        email = self.cleaned_data.get('email')
+        if not email:
+            return None
+        # Check for duplicates (excluding current instance)
+        qs = User.objects.filter(email=email)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise forms.ValidationError('A user with this email already exists.')
+        return email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        first_name = cleaned_data.get('first_name')
+
+        # Placeholder users (no email) must have a first name
+        if not email and not first_name:
+            raise forms.ValidationError(
+                'First name is required for placeholder users (users without email).'
+            )
+        return cleaned_data
+
     def save(self, commit=True):
         user = super().save(commit=commit)
         if commit:
@@ -197,8 +227,12 @@ class UserForm(forms.ModelForm):
 
 
 class UserInviteForm(forms.Form):
-    """Form for inviting new users."""
-    email = forms.EmailField(label='Email Address')
+    """Form for inviting new users or creating placeholder users."""
+    email = forms.EmailField(
+        label='Email Address',
+        required=False,
+        help_text='Leave blank to create a placeholder user (cannot log in)'
+    )
     first_name = forms.CharField(max_length=100, required=False, label='First Name')
     last_name = forms.CharField(max_length=100, required=False, label='Last Name')
     primary_position = forms.ModelChoiceField(
@@ -227,10 +261,16 @@ class UserInviteForm(forms.Form):
         if group_member:
             self.fields['primary_position'].initial = group_member
 
-        # Secondary positions: exclude Group Member
+        # Exclude membership positions from dropdowns
+        self.fields['primary_position'].queryset = ServicePosition.objects.filter(
+            is_active=True,
+            is_membership_position=False
+        ).order_by('display_name')
+
         self.fields['secondary_positions'].queryset = ServicePosition.objects.filter(
-            is_active=True
-        ).exclude(name='group_member').order_by('display_name')
+            is_active=True,
+            is_membership_position=False
+        ).order_by('display_name')
 
         self.helper = FormHelper()
         self.helper.form_method = 'post'
@@ -249,10 +289,24 @@ class UserInviteForm(forms.Form):
         )
 
     def clean_email(self):
-        email = self.cleaned_data['email']
+        email = self.cleaned_data.get('email')
+        if not email:
+            return None
         if User.objects.filter(email=email).exists():
             raise forms.ValidationError('A user with this email already exists.')
         return email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data.get('email')
+        first_name = cleaned_data.get('first_name')
+
+        # Placeholder users must have a first name
+        if not email and not first_name:
+            raise forms.ValidationError(
+                'First name is required for placeholder users (users without email).'
+            )
+        return cleaned_data
 
 
 class PasswordChangeFormStyled(DjangoPasswordChangeForm):
