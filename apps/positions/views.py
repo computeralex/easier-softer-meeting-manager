@@ -28,7 +28,10 @@ class PositionListView(ServicePositionRequiredMixin, ListView):
     context_object_name = 'positions'
 
     def get_queryset(self):
-        return ServicePosition.objects.filter(is_active=True).prefetch_related(
+        return ServicePosition.objects.filter(
+            is_active=True,
+            is_membership_position=False  # Hide membership positions like "Group Member"
+        ).prefetch_related(
             'assignments'
         ).annotate(
             current_holder_count=Count(

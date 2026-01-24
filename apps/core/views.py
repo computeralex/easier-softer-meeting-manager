@@ -454,6 +454,18 @@ class UserCreateView(ServicePositionRequiredMixin, CreateView):
         user.save()
         form.save_m2m()  # Save positions
 
+        # Auto-assign membership position (e.g., "Group Member")
+        membership_position = ServicePosition.objects.filter(
+            is_membership_position=True, is_active=True
+        ).first()
+        if membership_position:
+            PositionAssignment.objects.get_or_create(
+                user=user,
+                position=membership_position,
+                end_date__isnull=True,
+                defaults={'is_primary': False}
+            )
+
         # Send password reset email so user can set their own password
         if send_password_reset_email(user, self.request):
             messages.success(
@@ -600,6 +612,18 @@ class UserInviteView(ServicePositionRequiredMixin, FormView):
                 user=user,
                 position=position,
                 is_primary=False
+            )
+
+        # Auto-assign membership position (e.g., "Group Member")
+        membership_position = ServicePosition.objects.filter(
+            is_membership_position=True, is_active=True
+        ).first()
+        if membership_position:
+            PositionAssignment.objects.get_or_create(
+                user=user,
+                position=membership_position,
+                end_date__isnull=True,
+                defaults={'is_primary': False}
             )
 
         if send_email_flag:

@@ -55,6 +55,10 @@ class ServicePosition(models.Model):
         default=True,
         help_text='Show warning when multiple people hold this position'
     )
+    is_membership_position = models.BooleanField(
+        default=False,
+        help_text='Membership positions are auto-assigned and hidden from service positions list'
+    )
 
     created_at = models.DateTimeField(auto_now_add=True, null=True)
     updated_at = models.DateTimeField(auto_now=True, null=True)
