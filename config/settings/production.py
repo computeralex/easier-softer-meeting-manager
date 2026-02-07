@@ -56,7 +56,14 @@ else:
 
 # Static files with WhiteNoise
 MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 # Security settings
 SECURE_BROWSER_XSS_FILTER = True
@@ -77,13 +84,47 @@ SECURE_SSL_REDIRECT = True
 # Additional security headers
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 
+# Logging - capture errors to console (visible in Railway logs)
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+    'loggers': {
+        'django.request': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+        'django.server': {
+            'handlers': ['console'],
+            'level': 'ERROR',
+            'propagate': False,
+        },
+    },
+}
+
 # Content Security Policy via django-csp (4.0+ format)
 # Note: 'unsafe-inline' for scripts is needed until inline JS is refactored to external files
 # TODO: Remove 'unsafe-inline' from script-src after refactoring inline JS
 CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': ("'self'",),
-        'script-src': ("'self'", "'unsafe-inline'"),  # TODO: Remove 'unsafe-inline' after JS refactor
+        'script-src': ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://unpkg.com"),  # TODO: Remove 'unsafe-inline' after JS refactor
         'style-src': ("'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"),
         'img-src': ("'self'", "data:", "https:"),
         'font-src': ("'self'", "https://cdn.jsdelivr.net", "https://fonts.gstatic.com"),

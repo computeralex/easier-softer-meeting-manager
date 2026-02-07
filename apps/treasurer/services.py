@@ -129,7 +129,7 @@ class TreasurerService:
             description=description,
             income_category=income_category,
             notes=notes,
-            created_by=created_by,
+            created_by_id=created_by.pk if created_by else None,
         )
 
     @transaction.atomic
@@ -164,7 +164,7 @@ class TreasurerService:
                 category=category,
                 notes=notes,
                 receipt=receipt,
-                created_by=created_by,
+                created_by_id=created_by.pk if created_by else None,
             )
             created_records.append(parent)
 
@@ -181,7 +181,7 @@ class TreasurerService:
                     notes=notes,
                     parent_record=parent,
                     split_name=split['name'],
-                    created_by=created_by,
+                    created_by_id=created_by.pk if created_by else None,
                 )
                 created_records.append(child)
         else:
@@ -195,7 +195,7 @@ class TreasurerService:
                 category=category,
                 notes=notes,
                 receipt=receipt,
-                created_by=created_by,
+                created_by_id=created_by.pk if created_by else None,
             )
             created_records.append(record)
 
@@ -306,7 +306,7 @@ class TreasurerService:
             prudent_reserve=settings.prudent_reserve,
             ending_balance=current_balance,
             available_balance=current_balance - settings.prudent_reserve,
-            created_by=created_by,
+            created_by_id=created_by.pk if created_by else None,
         )
 
         return report
