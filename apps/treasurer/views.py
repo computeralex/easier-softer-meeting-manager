@@ -112,6 +112,8 @@ class AddRecordView(TreasurerRequiredMixin, MeetingMixin, FormView):
     def form_valid(self, form):
         service = self.get_service()
         data = form.cleaned_data
+        # Use saas_user (original auth user) if available, for correct FK reference
+        created_by = getattr(self.request, 'saas_user', self.request.user)
 
         if data['record_type'] == 'income':
             income_category = data.get('income_category')
@@ -128,7 +130,7 @@ class AddRecordView(TreasurerRequiredMixin, MeetingMixin, FormView):
                 description=description,
                 income_category=income_category,
                 notes=data.get('notes', ''),
-                created_by=self.request.user
+                created_by=created_by
             )
             messages.success(self.request, f"Income of ${data['amount']} recorded.")
         else:
@@ -140,7 +142,7 @@ class AddRecordView(TreasurerRequiredMixin, MeetingMixin, FormView):
                 notes=data.get('notes', ''),
                 disbursement_split=data.get('disbursement_split'),
                 receipt=data.get('receipt'),
-                created_by=self.request.user
+                created_by=created_by
             )
             messages.success(self.request, f"Expense of ${data['amount']} recorded.")
 
@@ -255,10 +257,11 @@ class CreateReportView(TreasurerRequiredMixin, MeetingMixin, FormView):
 
     def form_valid(self, form):
         service = self.get_service()
+        created_by = getattr(self.request, 'saas_user', self.request.user)
         report = service.create_report(
             start_date=form.cleaned_data['start_date'],
             end_date=form.cleaned_data['end_date'],
-            created_by=self.request.user
+            created_by=created_by
         )
         messages.success(self.request, f'Report created for {report.start_date} to {report.end_date}.')
         return redirect('treasurer:report_detail', pk=report.pk)
