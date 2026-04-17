@@ -13,6 +13,16 @@ from .base_module import BaseModule
 logger = logging.getLogger(__name__)
 
 
+def _position_user(request):
+    """Return the user that carries position methods.
+
+    Under the SaaS container, request.user is the shared SaaS user (no position
+    methods); the tenant-scoped core.User is at request.tenant_user. Standalone
+    deployments have request.user as core.User.
+    """
+    return getattr(request, "tenant_user", request.user)
+
+
 class ModuleRegistry:
     """
     Singleton registry for all application modules.
@@ -131,7 +141,7 @@ class ModuleRegistry:
         """
         nav_items = []
 
-        for module in self.get_modules_for_user(request.user):
+        for module in self.get_modules_for_user(_position_user(request)):
             module_nav = module.get_nav_items(request)
             for item in module_nav:
                 nav_items.append({
@@ -159,9 +169,10 @@ class ModuleRegistry:
         """
         sections = []
 
-        for module in self.get_modules_for_user(request.user):
+        position_user = _position_user(request)
+        for module in self.get_modules_for_user(position_user):
             # Only include settings from modules user can write to
-            if not module.check_write_access(request.user):
+            if not module.check_write_access(position_user):
                 continue
 
             module_sections = module.get_settings_sections(request)

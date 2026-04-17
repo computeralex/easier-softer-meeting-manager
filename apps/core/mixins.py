@@ -5,6 +5,18 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 
 
+def _position_user(request):
+    """Return the user that carries position methods.
+
+    When wrapped by the SaaS container, request.user is the shared SaaS user
+    (saas_accounts.User) which lives in the public schema and has no position
+    methods. The SaaS middleware attaches request.tenant_user (apps.core.User)
+    with those methods. Standalone deployments have request.user as core.User
+    directly.
+    """
+    return getattr(request, "tenant_user", request.user)
+
+
 class PositionRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """
     Mixin that requires a specific service position to access the view.
@@ -17,13 +29,13 @@ class PositionRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     required_positions = None  # Alternative: list of acceptable positions
 
     def test_func(self):
-        # Superusers always have access
-        if self.request.user.is_superuser:
+        user = _position_user(self.request)
+        if user.is_superuser:
             return True
         if self.required_positions:
-            return self.request.user.has_any_position(self.required_positions)
+            return user.has_any_position(self.required_positions)
         if self.required_position:
-            return self.request.user.has_position(self.required_position)
+            return user.has_position(self.required_position)
         return True
 
     def handle_no_permission(self):
@@ -47,18 +59,17 @@ class ServicePositionRequiredMixin(PositionRequiredMixin):
     required_positions = ['treasurer', 'secretary', 'literature', 'gsr']
 
     def test_func(self):
-        # Superusers always have access
-        if self.request.user.is_superuser:
+        user = _position_user(self.request)
+        if user.is_superuser:
             return True
-        # Any authenticated user with at least one position can access
-        return self.request.user.is_service_position_holder
+        return user.is_service_position_holder
 
 
 class SuperuserRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Mixin that requires superuser/admin access."""
 
     def test_func(self):
-        return self.request.user.is_superuser
+        return _position_user(self.request).is_superuser
 
     def handle_no_permission(self):
         if self.request.user.is_authenticated:

@@ -16,6 +16,20 @@ from .models import BusinessMeetingFormat, BusinessMeeting
 from .forms import BusinessMeetingFormatForm, BusinessMeetingForm
 
 
+def _fk_user(request):
+    """Return the user to assign to FKs declared against settings.AUTH_USER_MODEL.
+
+    When wrapped by the SaaS container, request.user has been swapped to the
+    tenant's core.User by middleware, but settings.AUTH_USER_MODEL points at
+    saas_accounts.User in the public schema. Writing core.User.pk into a
+    column constrained to saas_accounts_user(id) fails the FK check → 500.
+    The middleware stashes the original SaaS user at request.saas_user; use
+    it when available. Standalone deployments lack the attribute and fall
+    back to request.user (which is the local core.User, also the AUTH_USER_MODEL).
+    """
+    return getattr(request, "saas_user", request.user)
+
+
 class MeetingMixin:
     """Mixin to get the current meeting."""
 
@@ -49,7 +63,7 @@ class FormatEditView(ServicePositionRequiredMixin, MeetingMixin, UpdateView):
         return context
 
     def form_valid(self, form):
-        form.instance.updated_by = self.request.user
+        form.instance.updated_by = _fk_user(self.request)
         messages.success(self.request, 'Business meeting format updated.')
         return super().form_valid(form)
 
@@ -98,8 +112,9 @@ class MeetingCreateView(ServicePositionRequiredMixin, MeetingMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.meeting = self.get_meeting()
-        form.instance.created_by = self.request.user
-        form.instance.updated_by = self.request.user
+        fk_user = _fk_user(self.request)
+        form.instance.created_by = fk_user
+        form.instance.updated_by = fk_user
         messages.success(self.request, f'Business meeting for {form.instance.date} created.')
         return super().form_valid(form)
 
@@ -123,7 +138,7 @@ class MeetingUpdateView(ServicePositionRequiredMixin, MeetingMixin, UpdateView):
         return context
 
     def form_valid(self, form):
-        form.instance.updated_by = self.request.user
+        form.instance.updated_by = _fk_user(self.request)
         messages.success(self.request, f'Business meeting for {form.instance.date} updated.')
         return super().form_valid(form)
 

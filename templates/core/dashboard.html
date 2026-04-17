@@ -33,7 +33,7 @@
         <h5>Quick Actions</h5>
     </div>
 
-    {% if user.has_position and 'treasurer' in user.position_names %}
+    {% if position_user.has_position and 'treasurer' in position_user.position_names or user.has_position and 'treasurer' in user.position_names %}
     <div class="col-md-4 mb-3">
         <a href="{% url 'treasurer:add_record' %}" class="card text-decoration-none">
             <div class="card-body">
