@@ -19,7 +19,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0013_seed_default_positions"),
+        ("core", "0015_allow_placeholder_users"),
     ]
 
     operations = [
