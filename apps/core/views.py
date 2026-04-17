@@ -407,21 +407,26 @@ def send_password_reset_email(user, request):
     Returns True if email was sent successfully, False otherwise.
     """
     try:
-        # Use Django's PasswordResetForm to send the email
         form = PasswordResetForm(data={'email': user.email})
-        if form.is_valid():
-            form.save(
-                request=request,
-                use_https=request.is_secure(),
-                token_generator=default_token_generator,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                email_template_name='core/password_reset_email.html',
-                subject_template_name='core/password_reset_subject.txt',
-            )
-            return True
+        if not form.is_valid():
+            return False
+        # PasswordResetForm.save() silently does nothing when no users in
+        # AUTH_USER_MODEL match the email. Check before calling so callers
+        # can report accurate status instead of a misleading success.
+        matching = list(form.get_users(user.email))
+        if not matching:
+            return False
+        form.save(
+            request=request,
+            use_https=request.is_secure(),
+            token_generator=default_token_generator,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            email_template_name='core/password_reset_email.html',
+            subject_template_name='core/password_reset_subject.txt',
+        )
+        return True
     except Exception:
-        pass
-    return False
+        return False
 
 
 class UserCreateView(ServicePositionRequiredMixin, CreateView):
