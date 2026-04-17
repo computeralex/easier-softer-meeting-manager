@@ -14,6 +14,10 @@ class MeetingType(models.Model):
 
     When secretary selects a meeting type, all variations with that type
     will be shown across all blocks.
+
+    "Default" is a status of a specific meeting type (is_default=True), not
+    a separate pseudo-type — the first type created for a meeting is auto-
+    flagged as default, and the flag can be moved to a different type later.
     """
     meeting = models.ForeignKey(
         Meeting,
@@ -26,6 +30,10 @@ class MeetingType(models.Model):
     )
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
+    is_default = models.BooleanField(
+        default=False,
+        help_text='Used when no specific type is selected for the meeting.',
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -37,6 +45,26 @@ class MeetingType(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # If this is being set as the default, unset any other default on
+        # the same meeting. Mirrors the is_default pattern on BlockVariation.
+        if self.is_default and self.meeting_id:
+            MeetingType.objects.filter(
+                meeting_id=self.meeting_id,
+                is_default=True,
+            ).exclude(pk=self.pk).update(is_default=False)
+
+        # If no default exists yet on this meeting, this one becomes default.
+        if self.meeting_id and not self.is_default:
+            has_default = MeetingType.objects.filter(
+                meeting_id=self.meeting_id,
+                is_default=True,
+            ).exclude(pk=self.pk).exists()
+            if not has_default:
+                self.is_default = True
+
+        super().save(*args, **kwargs)
 
 
 class FormatModuleConfig(models.Model):

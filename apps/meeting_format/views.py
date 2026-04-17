@@ -423,8 +423,23 @@ class MeetingTypeDeleteView(ServicePositionRequiredMixin, MeetingMixin, DeleteVi
         return context
 
     def form_valid(self, form):
+        was_default = self.object.is_default
+        meeting_id = self.object.meeting_id
+        response = super().form_valid(form)
+        # Promote another type to default if we just deleted the default one,
+        # so the meeting never ends up with no default.
+        if was_default:
+            replacement = (
+                MeetingType.objects
+                .filter(meeting_id=meeting_id)
+                .order_by('order', 'pk')
+                .first()
+            )
+            if replacement:
+                replacement.is_default = True
+                replacement.save(update_fields=['is_default', 'updated_at'])
         messages.success(self.request, f'Meeting type "{self.object.name}" deleted.')
-        return super().form_valid(form)
+        return response
 
     def get_success_url(self):
         return reverse('meeting_format:meeting_type_list')
@@ -451,12 +466,32 @@ class SelectMeetingTypeView(ServicePositionRequiredMixin, MeetingMixin, View):
             except MeetingType.DoesNotExist:
                 messages.error(request, 'Invalid meeting type.')
         else:
-            # Clear selection (use default)
+            # Clear selection; the default meeting type will be used.
             config.selected_meeting_type = None
             config.save(update_fields=['selected_meeting_type', 'updated_at'])
-            messages.success(request, 'Meeting type cleared (using default content).')
+            messages.success(request, 'Meeting type cleared (using default).')
 
         return redirect('meeting_format:block_list')
+
+
+class MeetingTypeMakeDefaultView(ServicePositionRequiredMixin, MeetingMixin, View):
+    """Flag a specific meeting type as the default for this meeting."""
+    required_positions = ['secretary', 'group_rep']
+
+    def post(self, request, pk):
+        try:
+            meeting_type = MeetingType.objects.get(pk=pk, meeting=self.meeting)
+        except MeetingType.DoesNotExist:
+            messages.error(request, 'Meeting type not found.')
+            return redirect('meeting_format:meeting_type_list')
+
+        if meeting_type.is_default:
+            messages.info(request, f'"{meeting_type.name}" is already the default.')
+        else:
+            meeting_type.is_default = True
+            meeting_type.save(update_fields=['is_default', 'updated_at'])
+            messages.success(request, f'"{meeting_type.name}" is now the default meeting type.')
+        return redirect('meeting_format:meeting_type_list')
 
 
 # =============================================================================

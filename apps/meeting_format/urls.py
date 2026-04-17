@@ -29,6 +29,7 @@ urlpatterns = [
     path('types/add/', views.MeetingTypeCreateView.as_view(), name='meeting_type_create'),
     path('types/<int:pk>/edit/', views.MeetingTypeUpdateView.as_view(), name='meeting_type_update'),
     path('types/<int:pk>/delete/', views.MeetingTypeDeleteView.as_view(), name='meeting_type_delete'),
+    path('types/<int:pk>/make-default/', views.MeetingTypeMakeDefaultView.as_view(), name='meeting_type_make_default'),
     path('types/select/', views.SelectMeetingTypeView.as_view(), name='select_meeting_type'),
 
     # Settings

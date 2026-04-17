@@ -24,10 +24,14 @@
     <div class="card-body py-2">
         <form method="post" action="{% url 'meeting_format:select_meeting_type' %}" class="d-flex align-items-center gap-3">
             {% csrf_token %}
-            <select name="meeting_type" class="form-select form-select-sm" style="max-width: 200px;">
-                <option value="">Default (no type)</option>
+            <select name="meeting_type" class="form-select form-select-sm" style="max-width: 220px;">
                 {% for mt in meeting_types %}
-                <option value="{{ mt.pk }}" {% if config.selected_meeting_type.pk == mt.pk %}selected{% endif %}>{{ mt.name }}</option>
+                <option value="{{ mt.pk }}"
+                    {% if config.selected_meeting_type.pk == mt.pk %}selected
+                    {% elif not config.selected_meeting_type and mt.is_default %}selected
+                    {% endif %}>
+                    {{ mt.name }}{% if mt.is_default %} (default){% endif %}
+                </option>
                 {% endfor %}
             </select>
             <button type="submit" class="btn btn-primary btn-sm">

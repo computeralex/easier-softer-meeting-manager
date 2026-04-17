@@ -42,6 +42,9 @@
                 <tr>
                     <td>
                         <strong>{{ meeting_type.name }}</strong>
+                        {% if meeting_type.is_default %}
+                        <span class="badge bg-primary ms-2" title="Used when no specific type is selected">Default</span>
+                        {% endif %}
                     </td>
                     <td class="text-center">
                         <span class="badge bg-secondary">{{ meeting_type.variation_count }}</span>
@@ -54,6 +57,14 @@
                         {% endif %}
                     </td>
                     <td class="text-end">
+                        {% if not meeting_type.is_default %}
+                        <form method="post" action="{% url 'meeting_format:meeting_type_make_default' meeting_type.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Make default">
+                                <i class="bi bi-star"></i> Make Default
+                            </button>
+                        </form>
+                        {% endif %}
                         <a href="{% url 'meeting_format:meeting_type_update' meeting_type.pk %}" class="btn btn-sm btn-outline-secondary" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </a>
