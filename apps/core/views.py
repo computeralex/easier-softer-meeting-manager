@@ -428,6 +428,33 @@ def _from_email_for_current_tenant():
     return default
 
 
+def _ensure_auth_user_exists(user):
+    """Try to provision a SaaS-side auth row for this core.User.
+
+    Only meaningful when running under the SaaS wrapper. Returns True if a
+    matching AUTH_USER_MODEL row now exists. Silently returns False in
+    standalone deployments (hook not importable).
+    """
+    try:
+        from saas_apps.accounts.signals import ensure_saas_user_for_core_user
+    except ImportError:
+        return False
+
+    from django.db import connection
+    schema_name = getattr(connection, "schema_name", None)
+    if not schema_name or schema_name == "public":
+        return False
+
+    return ensure_saas_user_for_core_user(
+        email=getattr(user, "email", None),
+        schema_name=schema_name,
+        first_name=getattr(user, "first_name", "") or "",
+        last_name=getattr(user, "last_name", "") or "",
+        is_active=getattr(user, "is_active", True),
+        password_hash=getattr(user, "password", "") or "",
+    )
+
+
 def send_password_reset_email(user, request):
     """
     Send a password reset email to a user.
@@ -437,12 +464,22 @@ def send_password_reset_email(user, request):
         form = PasswordResetForm(data={'email': user.email})
         if not form.is_valid():
             return False
+
         # PasswordResetForm.save() silently does nothing when no users in
-        # AUTH_USER_MODEL match the email. Check before calling so callers
-        # can report accurate status instead of a misleading success.
+        # AUTH_USER_MODEL match the email. Under the SaaS wrapper, a core.User
+        # can exist without a corresponding saas_accounts.User (e.g., if the
+        # post_save signal failed). Self-heal by provisioning on demand, then
+        # re-query. Standalone deployments no-op at the import boundary.
         matching = list(form.get_users(user.email))
         if not matching:
-            return False
+            if _ensure_auth_user_exists(user):
+                form = PasswordResetForm(data={'email': user.email})
+                if not form.is_valid():
+                    return False
+                matching = list(form.get_users(user.email))
+            if not matching:
+                return False
+
         form.save(
             request=request,
             use_https=request.is_secure(),

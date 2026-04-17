@@ -127,14 +127,18 @@ class UserForm(forms.ModelForm):
         if not self.request_user or not self.request_user.is_superuser:
             del self.fields['is_superuser']
 
-        # Get Group Member as default
-        group_member = ServicePosition.objects.filter(name='group_member').first()
+        # Primary position queryset: all active positions, INCLUDING the
+        # membership position ("Group Member"). Users who don't currently
+        # hold a service position should be able to pick Group Member here —
+        # it's still a position, just the baseline one. Show membership
+        # positions last so service positions are visually prioritized.
+        group_member = ServicePosition.objects.filter(
+            name='group_member', is_active=True
+        ).first()
 
-        # Set primary position queryset - exclude membership positions
         self.fields['primary_position'].queryset = ServicePosition.objects.filter(
-            is_active=True,
-            is_membership_position=False
-        ).order_by('display_name')
+            is_active=True
+        ).order_by('is_membership_position', 'display_name')
 
         if not self.instance.pk and group_member:
             self.fields['primary_position'].initial = group_member
@@ -256,17 +260,21 @@ class UserInviteForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Get Group Member as default
-        group_member = ServicePosition.objects.filter(name='group_member').first()
+        group_member = ServicePosition.objects.filter(
+            name='group_member', is_active=True
+        ).first()
         if group_member:
             self.fields['primary_position'].initial = group_member
 
-        # Exclude membership positions from dropdowns
+        # Primary position queryset: all active positions, INCLUDING
+        # membership positions. Group Member is a valid primary for a user
+        # who does not currently hold a service position.
         self.fields['primary_position'].queryset = ServicePosition.objects.filter(
-            is_active=True,
-            is_membership_position=False
-        ).order_by('display_name')
+            is_active=True
+        ).order_by('is_membership_position', 'display_name')
 
+        # Secondary positions: keep membership positions excluded — holding
+        # Group Member as a *secondary* position makes no sense.
         self.fields['secondary_positions'].queryset = ServicePosition.objects.filter(
             is_active=True,
             is_membership_position=False
