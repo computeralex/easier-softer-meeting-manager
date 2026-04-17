@@ -401,6 +401,33 @@ class UserListView(ServicePositionRequiredMixin, ListView):
         return User.objects.prefetch_related('positions').order_by('-is_active', 'email')
 
 
+def _from_email_for_current_tenant():
+    """Build a From header whose display name is the current tenant's name.
+
+    Falls back to settings.DEFAULT_FROM_EMAIL when there is no tenant context
+    (standalone deployment, or a request running on the public schema). Keeps
+    the bare address from DEFAULT_FROM_EMAIL so the envelope sender and
+    domain alignment for SPF/DKIM stay consistent.
+    """
+    import re
+
+    default = settings.DEFAULT_FROM_EMAIL or ""
+    addr_match = re.search(r"<([^>]+)>", default)
+    addr = addr_match.group(1) if addr_match else default.strip()
+
+    try:
+        from django.db import connection
+        tenant = getattr(connection, "tenant", None)
+        name = None
+        if tenant is not None and getattr(tenant, "schema_name", "public") != "public":
+            name = getattr(tenant, "name", None)
+        if name:
+            return f"{name} <{addr}>"
+    except Exception:
+        pass
+    return default
+
+
 def send_password_reset_email(user, request):
     """
     Send a password reset email to a user.
@@ -420,7 +447,7 @@ def send_password_reset_email(user, request):
             request=request,
             use_https=request.is_secure(),
             token_generator=default_token_generator,
-            from_email=settings.DEFAULT_FROM_EMAIL,
+            from_email=_from_email_for_current_tenant(),
             email_template_name='core/password_reset_email.html',
             subject_template_name='core/password_reset_subject.txt',
         )
